@@ -56,6 +56,14 @@ class NextPlanModel(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class UserHWIDDeviceModel(BaseModel):
+    device_id: str
+    user_agent: Optional[str] = None
+    created_at: datetime
+    last_seen_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+
 class User(BaseModel):
     proxies: Dict[ProxyTypes, ProxySettings] = {}
     expire: Optional[int] = Field(None, nullable=True)
@@ -72,6 +80,8 @@ class User(BaseModel):
     online_at: Optional[datetime] = Field(None, nullable=True)
     on_hold_expire_duration: Optional[int] = Field(None, nullable=True)
     on_hold_timeout: Optional[Union[datetime, None]] = Field(None, nullable=True)
+    hwid_device_limit: Optional[int] = Field(ge=0, default=None, nullable=True)
+    node_data_limits: Optional[Dict[int, int]] = Field(default=None)
 
     auto_delete_in_days: Optional[int] = Field(None, nullable=True)
 
@@ -120,6 +130,48 @@ class User(BaseModel):
             return None
         return v
 
+    @field_validator("hwid_device_limit", mode="before")
+    def cast_hwid_device_limit(cls, v):
+        if v in (None, ""):
+            return None
+        if isinstance(v, float):
+            return int(v)
+        if isinstance(v, int):
+            return v
+        if isinstance(v, str) and v.isdigit():
+            return int(v)
+        raise ValueError("hwid_device_limit must be a non-negative integer")
+
+    @field_validator("node_data_limits", mode="before")
+    def validate_node_data_limits(cls, v):
+        if v is None:
+            return None
+        if not v:
+            return {}
+
+        normalized = {}
+        for node_id, data_limit in v.items():
+            if data_limit in (None, "", 0, "0"):
+                continue
+
+            parsed_node_id = int(node_id)
+            if isinstance(data_limit, float):
+                parsed_limit = int(data_limit)
+            elif isinstance(data_limit, int):
+                parsed_limit = data_limit
+            elif isinstance(data_limit, str):
+                parsed_limit = int(float(data_limit))
+            else:
+                raise ValueError("node_data_limits values must be numeric")
+
+            if parsed_limit < 0:
+                raise ValueError("node_data_limits values must be non-negative")
+
+            if parsed_limit > 0:
+                normalized[parsed_node_id] = parsed_limit
+
+        return normalized
+
 
 class UserCreate(User):
     username: str
@@ -144,6 +196,10 @@ class UserCreate(User):
             "expire": 0,
             "data_limit": 0,
             "data_limit_reset_strategy": "no_reset",
+            "hwid_device_limit": 2,
+            "node_data_limits": {
+                "1": 10737418240
+            },
             "status": "active",
             "note": "",
             "on_hold_timeout": "2023-11-03T20:30:00",
@@ -225,6 +281,10 @@ class UserModify(User):
             "expire": 0,
             "data_limit": 0,
             "data_limit_reset_strategy": "no_reset",
+            "hwid_device_limit": 2,
+            "node_data_limits": {
+                "1": 10737418240
+            },
             "status": "active",
             "note": "",
             "on_hold_timeout": "2023-11-03T20:30:00",
@@ -291,6 +351,7 @@ class UserResponse(User):
     excluded_inbounds: Dict[ProxyTypes, List[str]] = {}
 
     admin: Optional[Admin] = None
+    hwid_devices: List[UserHWIDDeviceModel] = []
     model_config = ConfigDict(from_attributes=True)
 
     @model_validator(mode="after")
@@ -333,6 +394,7 @@ class SubscriptionUserResponse(UserResponse):
     note: str | None = Field(None, exclude=True)
     inbounds: Dict[ProxyTypes, List[str]] | None = Field(None, exclude=True)
     auto_delete_in_days: int | None = Field(None, exclude=True)
+    hwid_devices: List[UserHWIDDeviceModel] | None = Field(None, exclude=True)
     model_config = ConfigDict(from_attributes=True)
 
 

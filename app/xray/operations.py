@@ -100,6 +100,16 @@ def remove_user(dbuser: "DBUser"):
                 _remove_user_from_inbound(node.api, inbound_tag, email)
 
 
+def remove_user_from_node(node_id: int, dbuser: "DBUser"):
+    email = f"{dbuser.id}.{dbuser.username}"
+    node = xray.nodes.get(node_id)
+    if not node or not node.connected or not node.started:
+        return
+
+    for inbound_tag in xray.config.inbounds_by_tag:
+        _remove_user_from_inbound(node.api, inbound_tag, email)
+
+
 def update_user(dbuser: "DBUser"):
     user = UserResponse.model_validate(dbuser)
     email = f"{dbuser.id}.{dbuser.username}"
@@ -272,6 +282,7 @@ def restart_node(node_id, config=None):
 __all__ = [
     "add_user",
     "remove_user",
+    "remove_user_from_node",
     "add_node",
     "remove_node",
     "connect_node",

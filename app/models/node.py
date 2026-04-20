@@ -21,7 +21,7 @@ class Node(BaseModel):
     address: str
     port: int = 62050
     api_port: int = 62051
-    usage_coefficient: float = Field(gt=0, default=1.0)
+    usage_coefficient: float = Field(ge=0, default=1.0)
 
 
 class NodeCreate(Node):
@@ -44,7 +44,7 @@ class NodeModify(Node):
     port: Optional[int] = Field(None, nullable=True)
     api_port: Optional[int] = Field(None, nullable=True)
     status: Optional[NodeStatus] = Field(None, nullable=True)
-    usage_coefficient: Optional[float] = Field(None, nullable=True)
+    usage_coefficient: Optional[float] = Field(None, ge=0, nullable=True)
     model_config = ConfigDict(json_schema_extra={
         "example": {
             "name": "DE node",

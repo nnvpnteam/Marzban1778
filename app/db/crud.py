@@ -26,6 +26,8 @@ from app.db.models import (
     ProxyTypes,
     System,
     User,
+    UserHWIDDevice,
+    UserNodeTrafficLimit,
     UserTemplate,
     UserUsageResetLogs,
 )
@@ -43,7 +45,12 @@ from app.models.user import (
 )
 from app.models.user_template import UserTemplateCreate, UserTemplateModify
 from app.utils.helpers import calculate_expiration_days, calculate_usage_percent
-from config import NOTIFY_DAYS_LEFT, NOTIFY_REACHED_USAGE_PERCENT, USERS_AUTODELETE_DAYS
+from config import (
+    DEFAULT_HWID_DEVICE_LIMIT,
+    NOTIFY_DAYS_LEFT,
+    NOTIFY_REACHED_USAGE_PERCENT,
+    USERS_AUTODELETE_DAYS,
+)
 
 
 def add_default_host(db: Session, inbound: ProxyInbound):
@@ -176,7 +183,21 @@ def get_user_queryset(db: Session) -> Query:
     Returns:
         Query: Base user query.
     """
-    return db.query(User).options(joinedload(User.admin)).options(joinedload(User.next_plan))
+    return (
+        db.query(User)
+        .options(joinedload(User.admin))
+        .options(joinedload(User.next_plan))
+        .options(joinedload(User.hwid_devices))
+        .options(joinedload(User.node_traffic_limits))
+    )
+
+
+def _replace_user_node_limits(dbuser: User, node_data_limits: Dict[int, int]):
+    dbuser.node_traffic_limits = [
+        UserNodeTrafficLimit(node_id=node_id, data_limit=data_limit)
+        for node_id, data_limit in node_data_limits.items()
+        if data_limit > 0
+    ]
 
 
 def get_user(db: Session, username: str) -> Optional[User]:
@@ -389,6 +410,7 @@ def create_user(db: Session, user: UserCreate, admin: Admin = None) -> User:
         note=user.note,
         on_hold_expire_duration=(user.on_hold_expire_duration or None),
         on_hold_timeout=(user.on_hold_timeout or None),
+        hwid_device_limit=user.hwid_device_limit,
         auto_delete_in_days=user.auto_delete_in_days,
         next_plan=NextPlan(
             data_limit=user.next_plan.data_limit,
@@ -397,6 +419,7 @@ def create_user(db: Session, user: UserCreate, admin: Admin = None) -> User:
             fire_on_either=user.next_plan.fire_on_either,
         ) if user.next_plan else None
     )
+    _replace_user_node_limits(dbuser, user.node_data_limits or {})
     db.add(dbuser)
     db.commit()
     db.refresh(dbuser)
@@ -515,6 +538,9 @@ def update_user(db: Session, dbuser: User, modify: UserModify) -> User:
     if modify.on_hold_expire_duration is not None:
         dbuser.on_hold_expire_duration = modify.on_hold_expire_duration
 
+    if modify.hwid_device_limit is not None:
+        dbuser.hwid_device_limit = modify.hwid_device_limit
+
     if modify.next_plan is not None:
         dbuser.next_plan = NextPlan(
             data_limit=modify.next_plan.data_limit,
@@ -524,6 +550,9 @@ def update_user(db: Session, dbuser: User, modify: UserModify) -> User:
         )
     elif dbuser.next_plan is not None:
         db.delete(dbuser.next_plan)
+
+    if modify.node_data_limits is not None:
+        _replace_user_node_limits(dbuser, modify.node_data_limits)
 
     dbuser.edit_at = datetime.utcnow()
 
@@ -644,6 +673,70 @@ def update_user_sub(db: Session, dbuser: User, user_agent: str) -> User:
     db.commit()
     db.refresh(dbuser)
     return dbuser
+
+
+def register_user_hwid(
+        db: Session, dbuser: User, device_id: str, user_agent: str = None
+) -> UserHWIDDevice:
+    device = (
+        db.query(UserHWIDDevice)
+        .filter(
+            UserHWIDDevice.user_id == dbuser.id,
+            UserHWIDDevice.device_id == device_id,
+        )
+        .first()
+    )
+    if device:
+        device.user_agent = user_agent or device.user_agent
+        device.last_seen_at = datetime.utcnow()
+        db.commit()
+        db.refresh(device)
+        return device
+
+    effective_limit = dbuser.hwid_device_limit
+    if effective_limit is None:
+        effective_limit = DEFAULT_HWID_DEVICE_LIMIT
+
+    if effective_limit and len(dbuser.hwid_devices) >= effective_limit:
+        raise ValueError("HWID device limit reached")
+
+    device = UserHWIDDevice(
+        user=dbuser,
+        device_id=device_id,
+        user_agent=user_agent or None,
+        last_seen_at=datetime.utcnow(),
+    )
+    db.add(device)
+    db.commit()
+    db.refresh(device)
+    return device
+
+
+def get_user_node_limit_exceeded_ids(
+        db: Session, node_id: int, user_ids: List[int]
+) -> List[int]:
+    if not user_ids:
+        return []
+
+    usage_sum = coalesce(func.sum(NodeUserUsage.used_traffic), 0)
+    rows = (
+        db.query(UserNodeTrafficLimit.user_id)
+        .join(
+            NodeUserUsage,
+            and_(
+                NodeUserUsage.user_id == UserNodeTrafficLimit.user_id,
+                NodeUserUsage.node_id == UserNodeTrafficLimit.node_id,
+            ),
+        )
+        .filter(
+            UserNodeTrafficLimit.node_id == node_id,
+            UserNodeTrafficLimit.user_id.in_(user_ids),
+        )
+        .group_by(UserNodeTrafficLimit.user_id, UserNodeTrafficLimit.data_limit)
+        .having(usage_sum >= UserNodeTrafficLimit.data_limit)
+        .all()
+    )
+    return [row[0] for row in rows]
 
 
 def reset_all_users_data_usage(db: Session, admin: Optional[Admin] = None):
@@ -1307,7 +1400,8 @@ def create_node(db: Session, node: NodeCreate) -> Node:
     dbnode = Node(name=node.name,
                   address=node.address,
                   port=node.port,
-                  api_port=node.api_port)
+                  api_port=node.api_port,
+                  usage_coefficient=node.usage_coefficient)
 
     db.add(dbnode)
     db.commit()
@@ -1362,7 +1456,7 @@ def update_node(db: Session, dbnode: Node, modify: NodeModify) -> Node:
     else:
         dbnode.status = NodeStatus.connecting
 
-    if modify.usage_coefficient:
+    if modify.usage_coefficient is not None:
         dbnode.usage_coefficient = modify.usage_coefficient
 
     db.commit()

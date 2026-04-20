@@ -1,7 +1,7 @@
 import re
 from distutils.version import LooseVersion
 
-from fastapi import APIRouter, Depends, Header, Path, Request, Response
+from fastapi import APIRouter, Depends, Header, HTTPException, Path, Request, Response
 from fastapi.responses import HTMLResponse
 
 from app.db import Session, crud, get_db
@@ -35,6 +35,18 @@ client_config = {
 router = APIRouter(tags=['Subscription'], prefix=f'/{XRAY_SUBSCRIPTION_PATH}')
 
 
+def resolve_hwid(request: Request, user_agent: str) -> str | None:
+    raw_device_id = (
+        request.headers.get("X-HWID")
+        or request.headers.get("X-Device-Id")
+        or request.query_params.get("hwid")
+        or request.query_params.get("device_id")
+    )
+    if raw_device_id:
+        return raw_device_id.strip()[:255]
+    return None
+
+
 def get_subscription_user_info(user: UserResponse) -> dict:
     """Retrieve user subscription information including upload, download, total data, and expiry."""
     return {
@@ -64,6 +76,13 @@ def user_subscription(
                 {"user": user}
             )
         )
+
+    device_id = resolve_hwid(request, user_agent)
+    if device_id:
+        try:
+            crud.register_user_hwid(db, dbuser, device_id, user_agent)
+        except ValueError:
+            raise HTTPException(status_code=403, detail="HWID device limit reached")
 
     crud.update_user_sub(db, dbuser, user_agent)
     response_headers = {
@@ -186,6 +205,14 @@ def user_subscription_with_client_type(
     }
 
     config = client_config.get(client_type)
+    device_id = resolve_hwid(request, user_agent)
+    if device_id:
+        try:
+            crud.register_user_hwid(db, dbuser, device_id, user_agent)
+        except ValueError:
+            raise HTTPException(status_code=403, detail="HWID device limit reached")
+
+    crud.update_user_sub(db, dbuser, user_agent)
     conf = generate_subscription(user=user,
                                  config_format=config["config_format"],
                                  as_base64=config["as_base64"],

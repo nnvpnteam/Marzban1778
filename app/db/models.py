@@ -86,6 +86,13 @@ class User(Base):
     online_at = Column(DateTime, nullable=True, default=None)
     on_hold_expire_duration = Column(BigInteger, nullable=True, default=None)
     on_hold_timeout = Column(DateTime, nullable=True, default=None)
+    hwid_device_limit = Column(Integer, nullable=True, default=None)
+    hwid_devices = relationship(
+        "UserHWIDDevice", back_populates="user", cascade="all, delete-orphan"
+    )
+    node_traffic_limits = relationship(
+        "UserNodeTrafficLimit", back_populates="user", cascade="all, delete-orphan"
+    )
 
     # * Positive values: User will be deleted after the value of this field in days automatically.
     # * Negative values: User won't be deleted automatically at all.
@@ -143,6 +150,13 @@ class User(Base):
                     _[proxy.type].append(inbound["tag"])
 
         return _
+
+    @property
+    def node_data_limits(self):
+        return {
+            limit.node_id: int(limit.data_limit)
+            for limit in self.node_traffic_limits
+        }
 
 
 excluded_inbounds_association = Table(
@@ -308,6 +322,9 @@ class Node(Base):
     downlink = Column(BigInteger, default=0)
     user_usages = relationship("NodeUserUsage", back_populates="node", cascade="all, delete-orphan")
     usages = relationship("NodeUsage", back_populates="node", cascade="all, delete-orphan")
+    user_traffic_limits = relationship(
+        "UserNodeTrafficLimit", back_populates="node", cascade="all, delete-orphan"
+    )
     usage_coefficient = Column(Float, nullable=False, server_default=text("1.0"), default=1)
 
 
@@ -338,6 +355,36 @@ class NodeUsage(Base):
     node = relationship("Node", back_populates="usages")
     uplink = Column(BigInteger, default=0)
     downlink = Column(BigInteger, default=0)
+
+
+class UserHWIDDevice(Base):
+    __tablename__ = "user_hwid_devices"
+    __table_args__ = (
+        UniqueConstraint("user_id", "device_id"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user = relationship("User", back_populates="hwid_devices")
+    device_id = Column(String(255), nullable=False)
+    user_agent = Column(String(512), nullable=True, default=None)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_seen_at = Column(DateTime, default=datetime.utcnow)
+
+
+class UserNodeTrafficLimit(Base):
+    __tablename__ = "user_node_traffic_limits"
+    __table_args__ = (
+        UniqueConstraint("user_id", "node_id"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user = relationship("User", back_populates="node_traffic_limits")
+    node_id = Column(Integer, ForeignKey("nodes.id"), nullable=False)
+    node = relationship("Node", back_populates="user_traffic_limits")
+    data_limit = Column(BigInteger, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class NotificationReminder(Base):

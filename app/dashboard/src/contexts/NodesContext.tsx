@@ -23,7 +23,10 @@ export const NodeSchema = z.object({
     .optional(),
   message: z.string().nullable().optional(),
   add_as_new_host: z.boolean().optional(),
-  usage_coefficient: z.number().or(z.string().transform((v) => parseFloat(v))),
+  usage_coefficient: z
+    .number()
+    .min(0)
+    .or(z.string().transform((v) => parseFloat(v))),
 });
 
 export type NodeType = z.infer<typeof NodeSchema>;

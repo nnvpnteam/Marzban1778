@@ -9,8 +9,8 @@ from sqlalchemy import and_, bindparam, insert, select, update
 from sqlalchemy.orm import Session
 from sqlalchemy.sql.dml import Insert
 
-from app import scheduler, xray
-from app.db import GetDB
+from app import logger, scheduler, xray
+from app.db import GetDB, crud
 from app.db.models import Admin, NodeUsage, NodeUserUsage, System, User
 from config import (
     DISABLE_RECORDING_NODE_USAGE,
@@ -127,6 +127,24 @@ def get_outbounds_stats(api: XRayAPI):
         return []
 
 
+def enforce_node_traffic_limits(node_id: Union[int, None], params: list):
+    if node_id is None or not params:
+        return
+
+    user_ids = [int(param["uid"]) for param in params]
+    with GetDB() as db:
+        exceeded_user_ids = crud.get_user_node_limit_exceeded_ids(db, node_id, user_ids)
+        if not exceeded_user_ids:
+            return
+        users = [crud.get_user_by_id(db, user_id) for user_id in exceeded_user_ids]
+
+    for dbuser in filter(None, users):
+        xray.operations.remove_user_from_node(node_id, dbuser)
+        logger.info(
+            f'User "{dbuser.username}" reached traffic limit on node {node_id} and was removed from that node'
+        )
+
+
 def record_user_usages():
     api_instances = {None: xray.api}
     usage_coefficient = {None: 1}  # default usage coefficient for the main api instance
@@ -181,6 +199,7 @@ def record_user_usages():
 
     for node_id, params in api_params.items():
         record_user_stats(params, node_id, usage_coefficient[node_id])
+        enforce_node_traffic_limits(node_id, params)
 
 
 def record_node_usages():

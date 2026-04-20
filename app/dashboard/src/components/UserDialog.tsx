@@ -39,6 +39,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { resetStrategy } from "constants/UserSettings";
 import { FilterUsageType, useDashboard } from "contexts/DashboardContext";
+import { useNodesQuery } from "contexts/NodesContext";
 import dayjs from "dayjs";
 import { FC, useEffect, useState } from "react";
 import ReactApexChart from "react-apexcharts";
@@ -90,6 +91,12 @@ export type FormType = Pick<UserCreate, keyof UserCreate> & {
 };
 
 const formatUser = (user: User): FormType => {
+  const nodeDataLimits = Object.fromEntries(
+    Object.entries(user.node_data_limits || {}).map(([nodeId, value]) => [
+      nodeId,
+      Number((value / 1073741824).toFixed(5)),
+    ])
+  );
   return {
     ...user,
     data_limit: user.data_limit
@@ -98,6 +105,8 @@ const formatUser = (user: User): FormType => {
     on_hold_expire_duration: user.on_hold_expire_duration
       ? Number(user.on_hold_expire_duration / (24 * 60 * 60))
       : user.on_hold_expire_duration,
+    hwid_device_limit: user.hwid_device_limit,
+    node_data_limits: nodeDataLimits,
     selected_proxies: Object.keys(user.proxies) as ProxyKeys,
   };
 };
@@ -111,11 +120,13 @@ const getDefaultValues = (): FormType => {
     selected_proxies: Object.keys(defaultInbounds) as ProxyKeys,
     data_limit: null,
     expire: null,
+    hwid_device_limit: null,
     username: "",
     data_limit_reset_strategy: "no_reset",
     status: "active",
     on_hold_expire_duration: null,
     note: "",
+    node_data_limits: {},
     inbounds,
     proxies: {
       vless: { id: "", flow: "" },
@@ -173,8 +184,29 @@ const baseSchema = {
       if (str) return Number((parseFloat(String(str)) * 1073741824).toFixed(5));
       return 0;
     }),
+  hwid_device_limit: z
+    .string()
+    .or(z.number())
+    .nullable()
+    .transform((value) => {
+      if (value === null || value === "") return null;
+      return Math.max(0, parseInt(String(value), 10) || 0);
+    }),
   expire: z.number().nullable(),
   data_limit_reset_strategy: z.string(),
+  node_data_limits: z
+    .record(z.string(), z.string().or(z.number()).nullable())
+    .transform((limits) => {
+      const normalized: Record<string, number> = {};
+      Object.entries(limits || {}).forEach(([nodeId, value]) => {
+        if (value === null || value === "") return;
+        const parsed = Number(value);
+        if (parsed > 0) {
+          normalized[nodeId] = Number((parsed * 1073741824).toFixed(5));
+        }
+      });
+      return normalized;
+    }),
   inbounds: z.record(z.string(), z.array(z.string())).transform((ins) => {
     Object.keys(ins).forEach((protocol) => {
       if (Array.isArray(ins[protocol]) && !ins[protocol]?.length)
@@ -230,6 +262,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
   const [error, setError] = useState<string | null>("");
   const toast = useToast();
   const { t, i18n } = useTranslation();
+  const { data: nodes } = useNodesQuery();
 
   const { colorMode } = useColorMode();
 
@@ -295,6 +328,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
     let body: UserCreate = {
       ...rest,
       data_limit: values.data_limit,
+      hwid_device_limit: values.hwid_device_limit,
       proxies: mergeProxies(selected_proxies, values.proxies),
       data_limit_reset_strategy:
         values.data_limit && values.data_limit > 0
@@ -539,6 +573,61 @@ export const UserDialog: FC<UserDialogProps> = () => {
                           }}
                         />
                       </FormControl>
+                      <FormControl mb={"10px"}>
+                        <FormLabel>HWID / Device limit</FormLabel>
+                        <Controller
+                          control={form.control}
+                          name="hwid_device_limit"
+                          render={({ field }) => {
+                            return (
+                              <>
+                                <Input
+                                  type="number"
+                                  size="sm"
+                                  borderRadius="6px"
+                                  onChange={field.onChange}
+                                  disabled={disabled}
+                                  value={field.value ? String(field.value) : ""}
+                                />
+                                <FormHelperText>
+                                  Empty uses panel default, 0 disables the limit for this user
+                                </FormHelperText>
+                              </>
+                            );
+                          }}
+                        />
+                      </FormControl>
+                      {!!nodes?.length && (
+                        <FormControl mb={"10px"}>
+                          <FormLabel>Per-node traffic limits</FormLabel>
+                          <VStack align="stretch" gap={2}>
+                            {nodes.map((node) => (
+                              <Controller
+                                key={node.id}
+                                control={form.control}
+                                name={`node_data_limits.${node.id}` as const}
+                                render={({ field }) => (
+                                  <>
+                                    <Input
+                                      label={`${node.name}`}
+                                      endAdornment="GB"
+                                      type="number"
+                                      size="sm"
+                                      borderRadius="6px"
+                                      onChange={field.onChange}
+                                      disabled={disabled}
+                                      value={field.value ? String(field.value) : ""}
+                                    />
+                                    <FormHelperText>
+                                      Leave empty to disable a dedicated limit for this node
+                                    </FormHelperText>
+                                  </>
+                                )}
+                              />
+                            ))}
+                          </VStack>
+                        </FormControl>
+                      )}
                       <Collapse
                         in={!!(dataLimit && dataLimit > 0)}
                         animateOpacity
@@ -703,6 +792,38 @@ export const UserDialog: FC<UserDialogProps> = () => {
                           {form.formState.errors?.note?.message}
                         </FormErrorMessage>
                       </FormControl>
+                      {isEditing && !!editingUser?.hwid_devices?.length && (
+                        <FormControl mb={"10px"}>
+                          <FormLabel>Registered devices</FormLabel>
+                          <VStack
+                            align="stretch"
+                            gap={2}
+                            maxH="180px"
+                            overflowY="auto"
+                          >
+                            {editingUser.hwid_devices.map((device) => (
+                              <Box
+                                key={device.device_id}
+                                borderWidth="1px"
+                                borderRadius="8px"
+                                p={2}
+                              >
+                                <Text fontSize="sm" fontWeight="medium">
+                                  {device.device_id}
+                                </Text>
+                                {device.user_agent && (
+                                  <Text fontSize="xs" opacity={0.75}>
+                                    {device.user_agent}
+                                  </Text>
+                                )}
+                                <Text fontSize="xs" opacity={0.75}>
+                                  Last seen: {dayjs(device.last_seen_at).format("YYYY-MM-DD HH:mm")}
+                                </Text>
+                              </Box>
+                            ))}
+                          </VStack>
+                        </FormControl>
+                      )}
                     </Flex>
                     {error && (
                       <Alert

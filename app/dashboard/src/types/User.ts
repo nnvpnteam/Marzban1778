@@ -35,12 +35,23 @@ export type DataLimitResetStrategy =
 export type UserInbounds = {
   [key: string]: string[];
 };
+
+export type UserHWIDDevice = {
+  device_id: string;
+  user_agent?: string | null;
+  created_at: string;
+  last_seen_at: string;
+};
+
 export type User = {
   proxies: ProxyType;
   expire: number | null;
   data_limit: number | null;
   data_limit_reset_strategy: DataLimitResetStrategy;
   on_hold_expire_duration: number | null;
+  hwid_device_limit: number | null;
+  node_data_limits?: Record<string, number>;
+  hwid_devices?: UserHWIDDevice[];
   lifetime_used_traffic: number;
   username: string;
   used_traffic: number;
@@ -59,6 +70,8 @@ export type UserCreate = Pick<
   | "expire"
   | "data_limit"
   | "data_limit_reset_strategy"
+  | "hwid_device_limit"
+  | "node_data_limits"
   | "on_hold_expire_duration"
   | "username"
   | "status"
