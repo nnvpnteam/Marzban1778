@@ -35,6 +35,14 @@ XRAY_EXCLUDE_INBOUND_TAGS = config("XRAY_EXCLUDE_INBOUND_TAGS", default='').spli
 XRAY_SUBSCRIPTION_URL_PREFIX = config("XRAY_SUBSCRIPTION_URL_PREFIX", default="").strip("/")
 XRAY_SUBSCRIPTION_PATH = config("XRAY_SUBSCRIPTION_PATH", default="sub").strip("/")
 DEFAULT_HWID_DEVICE_LIMIT = config("DEFAULT_HWID_DEVICE_LIMIT", cast=int, default=2)
+HWID_HEADER_NAMES = [
+    header.strip().lower()
+    for header in config(
+        "HWID_HEADER_NAMES",
+        default="x-hwid,hwid,happ-hwid,v2raytun-hwid,x-device-id",
+    ).split(",")
+    if header.strip()
+]
 
 TELEGRAM_API_TOKEN = config("TELEGRAM_API_TOKEN", default="")
 TELEGRAM_ADMIN_ID = config(

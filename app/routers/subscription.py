@@ -10,6 +10,7 @@ from app.models.user import SubscriptionUserResponse, UserResponse
 from app.subscription.share import encode_title, generate_subscription
 from app.templates import render_template
 from config import (
+    HWID_HEADER_NAMES,
     SUB_PROFILE_TITLE,
     SUB_SUPPORT_URL,
     SUB_UPDATE_INTERVAL,
@@ -36,12 +37,18 @@ router = APIRouter(tags=['Subscription'], prefix=f'/{XRAY_SUBSCRIPTION_PATH}')
 
 
 def resolve_hwid(request: Request, user_agent: str) -> str | None:
-    raw_device_id = (
-        request.headers.get("X-HWID")
-        or request.headers.get("X-Device-Id")
-        or request.query_params.get("hwid")
-        or request.query_params.get("device_id")
-    )
+    raw_device_id = None
+    for header_name in HWID_HEADER_NAMES:
+        value = request.headers.get(header_name)
+        if value:
+            raw_device_id = value
+            break
+
+    if not raw_device_id:
+        raw_device_id = (
+            request.query_params.get("hwid")
+            or request.query_params.get("device_id")
+        )
     if raw_device_id:
         return raw_device_id.strip()[:255]
     return None
