@@ -87,22 +87,6 @@ const UserUsageIcon = chakra(ChartPieIcon, {
   },
 });
 
-const DevicePhoneIcon = chakra(DevicePhoneMobileIcon, {
-  baseStyle: { w: 4, h: 4 },
-});
-
-const DeviceDesktopIcon = chakra(ComputerDesktopIcon, {
-  baseStyle: { w: 4, h: 4 },
-});
-
-const DeviceUnknownIcon = chakra(QuestionMarkCircleIcon, {
-  baseStyle: { w: 4, h: 4 },
-});
-
-const DeviceRemoveIcon = chakra(TrashIcon, {
-  baseStyle: { w: 4, h: 4 },
-});
-
 type DeviceVisualMeta = {
   platform: "iphone" | "android" | "desktop" | "unknown";
   appName: string;
@@ -238,10 +222,22 @@ const getDeviceVisualMeta = (userAgent?: string | null): DeviceVisualMeta => {
   };
 };
 
-const getDeviceIcon = (platform: DeviceVisualMeta["platform"]) => {
-  if (platform === "desktop") return <DeviceDesktopIcon />;
-  if (platform === "iphone" || platform === "android") return <DevicePhoneIcon />;
-  return <DeviceUnknownIcon />;
+const DEVICE_CARD_OUTLINE_PX = 40;
+
+/** Black outline icons like the reference mockup (not the colored dashboard Icon tile). */
+const DeviceCardOutlineIcon = ({
+  platform,
+}: {
+  platform: DeviceVisualMeta["platform"];
+}) => {
+  const dim = { width: DEVICE_CARD_OUTLINE_PX, height: DEVICE_CARD_OUTLINE_PX };
+  if (platform === "desktop") {
+    return <ComputerDesktopIcon {...dim} color="currentColor" />;
+  }
+  if (platform === "iphone" || platform === "android") {
+    return <DevicePhoneMobileIcon {...dim} color="currentColor" />;
+  }
+  return <QuestionMarkCircleIcon {...dim} color="currentColor" />;
 };
 
 /** Top pill: "IOS | iPhone 16 Pro" style from parsed meta */
@@ -1018,7 +1014,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
                           <VStack align="stretch" gap={{ base: 3, md: 3 }}>
                             {editingUser.hwid_devices.map((device) => {
                               const meta = getDeviceVisualMeta(device.user_agent);
-                              const seen = dayjs(device.last_seen_at).format("DD.MM.YYYY HH:mm");
+                              const seen = dayjs(device.last_seen_at).format("DD.MM.YYYY");
                               const pill = buildDeviceCardPill(meta);
                               return (
                                 <Box
@@ -1026,130 +1022,96 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                   w="100%"
                                   maxW="100%"
                                   minW={0}
-                                  position="relative"
                                   borderWidth="1px"
-                                  borderRadius="xl"
+                                  borderRadius="lg"
                                   overflow="hidden"
-                                  bg="gray.100"
-                                  borderColor="gray.200"
+                                  bg="#D9D9D9"
+                                  borderColor="#BDBDBD"
                                   _dark={{
-                                    bg: "gray.700",
-                                    borderColor: "gray.600",
+                                    bg: "gray.600",
+                                    borderColor: "gray.500",
                                   }}
                                 >
-                                  <Tooltip label="Delete device" placement="left">
-                                    <IconButton
-                                      aria-label="Delete device"
-                                      position="absolute"
-                                      top={2}
-                                      right={2}
-                                      zIndex={1}
-                                      size="sm"
-                                      colorScheme="red"
-                                      variant="ghost"
-                                      isLoading={deletingDeviceId === device.device_id}
-                                      onClick={() => {
-                                        if (!editingUser) return;
-                                        setDeletingDeviceId(device.device_id);
-                                        removeUserDevice(editingUser, device.device_id)
-                                          .catch((err) => {
-                                            setError(err?.response?._data?.detail || "Failed to delete device");
-                                          })
-                                          .finally(() => setDeletingDeviceId(null));
-                                      }}
-                                    >
-                                      <DeviceRemoveIcon />
-                                    </IconButton>
-                                  </Tooltip>
                                   <Flex
-                                    align="flex-start"
-                                    gap={{ base: 3, md: 4 }}
+                                    align="center"
+                                    gap={{ base: 4, md: 5 }}
                                     minW={0}
-                                    py={{ base: 4, md: 4 }}
+                                    py={{ base: 4, md: 5 }}
                                     px={{ base: 4, md: 5 }}
-                                    pr={{ base: 12, md: 14 }}
                                   >
-                                    <Box flexShrink={0} pt={1}>
-                                      <Icon color={`${meta.colorScheme}.400`}>
-                                        {getDeviceIcon(meta.platform)}
-                                      </Icon>
+                                    <Box flexShrink={0} color="gray.900" _dark={{ color: "gray.100" }} lineHeight={0}>
+                                      <DeviceCardOutlineIcon platform={meta.platform} />
                                     </Box>
-                                    <VStack align="stretch" spacing={3} flex="1" minW={0}>
-                                      <Box
-                                        w="100%"
-                                        maxW="100%"
-                                        overflowX="auto"
-                                        overflowY="hidden"
-                                        sx={{
-                                          scrollbarWidth: "thin",
-                                          "&::-webkit-scrollbar": { height: "6px" },
-                                          "&::-webkit-scrollbar-thumb": {
-                                            borderRadius: "full",
-                                            bg: "blackAlpha.300",
-                                          },
-                                        }}
-                                      >
-                                        <Box display="inline-block" maxW="none">
+                                    <VStack align="stretch" spacing={2.5} flex="1" minW={0}>
+                                      <HStack align="center" spacing={3} minW={0} w="100%">
+                                        <Box
+                                          flex="1"
+                                          minW={0}
+                                          overflowX="auto"
+                                          sx={{
+                                            scrollbarWidth: "thin",
+                                            "&::-webkit-scrollbar": { height: "5px" },
+                                            "&::-webkit-scrollbar-thumb": {
+                                              borderRadius: "full",
+                                              bg: "blackAlpha.400",
+                                            },
+                                          }}
+                                        >
                                           <Box
+                                            as="span"
                                             display="inline-block"
                                             px={4}
                                             py={1.5}
                                             borderRadius="full"
-                                            bg={`${meta.colorScheme}.400`}
-                                            color="gray.900"
-                                            _dark={{
-                                              bg: `${meta.colorScheme}.500`,
-                                              color: "gray.900",
-                                            }}
+                                            bg="#FF8C00"
+                                            color="#000000"
+                                            _dark={{ bg: "#FF8C00", color: "#000000" }}
                                           >
                                             <Text
                                               as="span"
                                               fontSize="sm"
                                               fontWeight="semibold"
                                               whiteSpace="nowrap"
-                                              lineHeight={1.35}
+                                              lineHeight={1.3}
+                                              fontFamily="body"
                                             >
                                               {pill}
                                             </Text>
                                           </Box>
                                         </Box>
-                                      </Box>
+                                        <Tooltip label="Delete device" placement="top">
+                                          <IconButton
+                                            aria-label="Delete device"
+                                            flexShrink={0}
+                                            size="sm"
+                                            variant="ghost"
+                                            color="red.500"
+                                            _hover={{ bg: "blackAlpha.100" }}
+                                            _dark={{ _hover: { bg: "whiteAlpha.200" } }}
+                                            isLoading={deletingDeviceId === device.device_id}
+                                            onClick={() => {
+                                              if (!editingUser) return;
+                                              setDeletingDeviceId(device.device_id);
+                                              removeUserDevice(editingUser, device.device_id)
+                                                .catch((err) => {
+                                                  setError(err?.response?._data?.detail || "Failed to delete device");
+                                                })
+                                                .finally(() => setDeletingDeviceId(null));
+                                            }}
+                                          >
+                                            <TrashIcon width={22} height={22} />
+                                          </IconButton>
+                                        </Tooltip>
+                                      </HStack>
                                       <Box
                                         w="100%"
-                                        maxW="100%"
                                         overflowX="auto"
                                         sx={{
                                           scrollbarWidth: "thin",
-                                          "&::-webkit-scrollbar": { height: "6px" },
+                                          "&::-webkit-scrollbar": { height: "5px" },
                                           "&::-webkit-scrollbar-thumb": {
                                             borderRadius: "full",
-                                            bg: "blackAlpha.300",
-                                          },
-                                        }}
-                                      >
-                                        <Text
-                                          fontSize="sm"
-                                          whiteSpace="nowrap"
-                                          lineHeight={1.55}
-                                          color="gray.800"
-                                          _dark={{ color: "gray.100" }}
-                                        >
-                                          <Text as="span" fontWeight="bold" color="gray.600" _dark={{ color: "gray.300" }}>
-                                            App:{" "}
-                                          </Text>
-                                          {meta.appName}
-                                        </Text>
-                                      </Box>
-                                      <Box
-                                        w="100%"
-                                        maxW="100%"
-                                        overflowX="auto"
-                                        sx={{
-                                          scrollbarWidth: "thin",
-                                          "&::-webkit-scrollbar": { height: "6px" },
-                                          "&::-webkit-scrollbar-thumb": {
-                                            borderRadius: "full",
-                                            bg: "blackAlpha.300",
+                                            bg: "blackAlpha.400",
                                           },
                                         }}
                                       >
@@ -1157,24 +1119,49 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                           fontSize="sm"
                                           fontFamily="mono"
                                           whiteSpace="nowrap"
-                                          lineHeight={1.55}
-                                          color="gray.800"
-                                          _dark={{ color: "gray.100" }}
+                                          lineHeight={1.45}
+                                          color="#000000"
+                                          _dark={{ color: "gray.50" }}
                                         >
-                                          <Text as="span" fontWeight="bold" fontFamily="body" color="gray.600" _dark={{ color: "gray.300" }}>
+                                          <Text as="span" fontWeight="semibold" fontFamily="body">
                                             HWID:{" "}
                                           </Text>
                                           {device.device_id}
                                         </Text>
                                       </Box>
+                                      <Box
+                                        w="100%"
+                                        overflowX="auto"
+                                        sx={{
+                                          scrollbarWidth: "thin",
+                                          "&::-webkit-scrollbar": { height: "5px" },
+                                          "&::-webkit-scrollbar-thumb": {
+                                            borderRadius: "full",
+                                            bg: "blackAlpha.400",
+                                          },
+                                        }}
+                                      >
+                                        <Text
+                                          fontSize="sm"
+                                          whiteSpace="nowrap"
+                                          lineHeight={1.45}
+                                          color="#000000"
+                                          _dark={{ color: "gray.50" }}
+                                        >
+                                          <Text as="span" fontWeight="semibold">
+                                            App:{" "}
+                                          </Text>
+                                          {meta.appName}
+                                        </Text>
+                                      </Box>
                                       <Text
                                         fontSize="sm"
                                         whiteSpace="nowrap"
-                                        lineHeight={1.55}
-                                        color="gray.800"
-                                        _dark={{ color: "gray.100" }}
+                                        lineHeight={1.45}
+                                        color="#000000"
+                                        _dark={{ color: "gray.50" }}
                                       >
-                                        <Text as="span" fontWeight="bold" color="gray.600" _dark={{ color: "gray.300" }}>
+                                        <Text as="span" fontWeight="semibold">
                                           Last seen:{" "}
                                         </Text>
                                         {seen}
