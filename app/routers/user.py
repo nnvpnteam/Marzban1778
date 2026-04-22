@@ -207,18 +207,21 @@ def remove_user_hwid_device(
     dbuser: UserResponse = Depends(get_validated_user),
     admin: Admin = Depends(Admin.get_current),
 ):
-    """Remove a registered HWID device from user."""
+    """Remove a registered HWID device from user and revoke subscription."""
     removed = crud.remove_user_hwid_device(db=db, dbuser=dbuser, device_id=device_id)
     if not removed:
         raise HTTPException(status_code=404, detail="Device not found")
 
+    dbuser = crud.revoke_user_sub(db=db, dbuser=dbuser)
     db.refresh(dbuser)
     user = UserResponse.model_validate(dbuser)
 
     if dbuser.status in [UserStatus.active, UserStatus.on_hold]:
         bg.add_task(xray.operations.update_user, dbuser=dbuser)
-    bg.add_task(report.user_updated, user=user, user_admin=dbuser.admin, by=admin)
-    logger.info(f'Removed HWID device "{device_id}" from user "{dbuser.username}"')
+    bg.add_task(report.user_subscription_revoked, user=user, user_admin=dbuser.admin, by=admin)
+    logger.info(
+        f'Removed HWID device "{device_id}" and revoked subscription for user "{dbuser.username}"'
+    )
     return user
 
 
