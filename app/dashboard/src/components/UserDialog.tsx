@@ -946,9 +946,11 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                 >
                                   <HStack align="start" gap={2} minW={0}>
                                     <HStack align="center" gap={2} flex="1" minW={0}>
-                                      <Icon flexShrink={0} color={`${meta.colorScheme}.400`}>
-                                        {getDeviceIcon(meta.platform)}
-                                      </Icon>
+                                      <Box flexShrink={0}>
+                                        <Icon color={`${meta.colorScheme}.400`}>
+                                          {getDeviceIcon(meta.platform)}
+                                        </Icon>
+                                      </Box>
                                       <Box minW={0}>
                                         <Text fontSize="sm" fontWeight="semibold" lineHeight={1.2} noOfLines={2}>
                                             {meta.appName}
