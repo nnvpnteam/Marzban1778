@@ -490,10 +490,10 @@ export const UserDialog: FC<UserDialogProps> = () => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="2xl">
+    <Modal isOpen={isOpen} onClose={onClose} size={{ base: "full", md: "4xl" }}>
       <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
       <FormProvider {...form}>
-        <ModalContent mx="3">
+        <ModalContent mx={{ base: 0, md: 3 }} my={{ base: 0, md: "auto" }}>
           <form onSubmit={form.handleSubmit(submit)}>
             <ModalHeader pt={6}>
               <HStack gap={2}>
@@ -515,12 +515,13 @@ export const UserDialog: FC<UserDialogProps> = () => {
             <ModalBody>
               <Grid
                 templateColumns={{
-                  base: "repeat(1, 1fr)",
-                  md: "repeat(2, 1fr)",
+                  base: "minmax(0, 1fr)",
+                  md: "minmax(0, 1fr) minmax(0, 1fr)",
                 }}
                 gap={3}
+                w="full"
               >
-                <GridItem>
+                <GridItem minW={0}>
                   <VStack justifyContent="space-between">
                     <Flex
                       flexDirection="column"
@@ -849,7 +850,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
                     )}
                   </VStack>
                 </GridItem>
-                <GridItem>
+                <GridItem minW={0}>
                   <FormControl
                     isInvalid={
                       !!form.formState.errors.selected_proxies?.message
@@ -919,14 +920,15 @@ export const UserDialog: FC<UserDialogProps> = () => {
                         p={2}
                         maxH="340px"
                         overflowY="auto"
+                        minW={0}
                       >
                         {!!editingUser?.hwid_devices?.length ? (
                           <VStack align="stretch" gap={2}>
-                            <HStack px={2} pb={1} color="gray.500" fontSize="xs" fontWeight="semibold">
-                              <Box minW="150px">App / Device</Box>
-                              <Box flex="1">HWID</Box>
-                              <Box minW="130px" textAlign="right">Last seen</Box>
-                              <Box minW="28px" />
+                            <HStack px={2} pb={1} color="gray.500" fontSize="xs" fontWeight="semibold" align="flex-end" gap={2} minW={0}>
+                              <Box minW="140px" maxW="40%" flexShrink={0}>App / Device</Box>
+                              <Box flex="1" minW={0}>HWID</Box>
+                              <Box minW="118px" flexShrink={0} textAlign="right">Last seen</Box>
+                              <Box w="32px" flexShrink={0} />
                             </HStack>
                             {editingUser.hwid_devices.map((device) => {
                               const meta = getDeviceVisualMeta(device.user_agent);
@@ -936,14 +938,15 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                   borderWidth="1px"
                                   borderRadius="8px"
                                   p={2}
+                                  minW={0}
                                 >
-                                  <HStack justifyContent="space-between" align="start" gap={2}>
-                                    <HStack align="center" gap={2} minW="150px">
+                                  <HStack align="start" gap={2} minW={0}>
+                                    <HStack align="center" gap={2} minW="140px" maxW="40%" flexShrink={0}>
                                       <Icon color={`${meta.colorScheme}.400`}>
                                         {getDeviceIcon(meta.platform)}
                                       </Icon>
-                                      <Box>
-                                        <Text fontSize="sm" fontWeight="semibold" lineHeight={1.2}>
+                                      <Box minW={0}>
+                                        <Text fontSize="sm" fontWeight="semibold" lineHeight={1.2} noOfLines={2}>
                                             {meta.appName}
                                         </Text>
                                         <Box
@@ -961,10 +964,22 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                         </Box>
                                       </Box>
                                     </HStack>
-                                    <Text fontSize="xs" opacity={0.75} flex="1" pt={1} wordBreak="break-all">
-                                      {device.device_id}
-                                    </Text>
-                                    <Text fontSize="xs" opacity={0.75} minW="130px" textAlign="right" pt={1}>
+                                    <Box flex="1" minW={0} pt={1}>
+                                      <Tooltip label={device.device_id} placement="top" openDelay={400}>
+                                        <Text
+                                          fontSize="xs"
+                                          opacity={0.75}
+                                          fontFamily="mono"
+                                          noOfLines={2}
+                                          whiteSpace="normal"
+                                          wordBreak="break-word"
+                                          overflowWrap="break-word"
+                                        >
+                                          {device.device_id}
+                                        </Text>
+                                      </Tooltip>
+                                    </Box>
+                                    <Text fontSize="xs" opacity={0.75} minW="118px" flexShrink={0} textAlign="right" pt={1} whiteSpace="nowrap">
                                       {dayjs(device.last_seen_at).format("YYYY-MM-DD HH:mm")}
                                     </Text>
                                     <Tooltip label="Delete device" placement="top">
@@ -973,6 +988,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                         size="xs"
                                         colorScheme="red"
                                         variant="ghost"
+                                        flexShrink={0}
                                         isLoading={deletingDeviceId === device.device_id}
                                         onClick={() => {
                                           if (!editingUser) return;
