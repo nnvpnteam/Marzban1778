@@ -582,7 +582,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size={{ base: "full", md: "5xl" }}>
+    <Modal isOpen={isOpen} onClose={onClose} size={{ base: "full", md: "4xl" }}>
       <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
       <FormProvider {...form}>
         <ModalContent mx={{ base: 0, md: 3 }} my={{ base: 0, md: "auto" }}>
@@ -608,7 +608,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
               <Grid
                 templateColumns={{
                   base: "minmax(0, 1fr)",
-                  md: "minmax(0, 1fr) minmax(0, 1.22fr)",
+                  md: "minmax(0, 1fr) minmax(0, 1fr)",
                 }}
                 gap={3}
                 w="full"
@@ -1009,13 +1009,13 @@ export const UserDialog: FC<UserDialogProps> = () => {
                       <Box
                         borderWidth="1px"
                         borderRadius="10px"
-                        p={{ base: 2, md: 2 }}
-                        maxH="340px"
+                        p={{ base: 3, md: 3 }}
+                        maxH="380px"
                         overflowY="auto"
                         minW={0}
                       >
                         {!!editingUser?.hwid_devices?.length ? (
-                          <VStack align="stretch" gap={{ base: 2, md: 2 }}>
+                          <VStack align="stretch" gap={{ base: 3, md: 3 }}>
                             {editingUser.hwid_devices.map((device) => {
                               const meta = getDeviceVisualMeta(device.user_agent);
                               const seen = dayjs(device.last_seen_at).format("DD.MM.YYYY HH:mm");
@@ -1028,7 +1028,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                   minW={0}
                                   position="relative"
                                   borderWidth="1px"
-                                  borderRadius="lg"
+                                  borderRadius="xl"
                                   overflow="hidden"
                                   bg="gray.100"
                                   borderColor="gray.200"
@@ -1041,10 +1041,10 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                     <IconButton
                                       aria-label="Delete device"
                                       position="absolute"
-                                      top={1}
-                                      right={1}
+                                      top={2}
+                                      right={2}
                                       zIndex={1}
-                                      size="xs"
+                                      size="sm"
                                       colorScheme="red"
                                       variant="ghost"
                                       isLoading={deletingDeviceId === device.device_id}
@@ -1063,70 +1063,118 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                   </Tooltip>
                                   <Flex
                                     align="flex-start"
-                                    gap={{ base: 2.5, md: 3 }}
+                                    gap={{ base: 3, md: 4 }}
                                     minW={0}
-                                    py={{ base: 1.5, md: 1.5 }}
-                                    px={{ base: 2.5, md: 3 }}
-                                    pr={{ base: 10, md: 11 }}
+                                    py={{ base: 4, md: 4 }}
+                                    px={{ base: 4, md: 5 }}
+                                    pr={{ base: 12, md: 14 }}
                                   >
-                                    <Box flexShrink={0} pt={0.5} transform="scale(0.92)">
+                                    <Box flexShrink={0} pt={1}>
                                       <Icon color={`${meta.colorScheme}.400`}>
                                         {getDeviceIcon(meta.platform)}
                                       </Icon>
                                     </Box>
-                                    <VStack align="flex-start" spacing={1} flex="1" minW={0}>
-                                      <Tooltip label={pill} placement="top" openDelay={200}>
-                                        <Box
-                                          maxW="100%"
-                                          px={2.5}
-                                          py={0.5}
-                                          borderRadius="full"
-                                          bg={`${meta.colorScheme}.400`}
-                                          color="gray.900"
-                                          _dark={{
-                                            bg: `${meta.colorScheme}.500`,
-                                            color: "gray.900",
-                                          }}
-                                        >
-                                          <Text
-                                            fontSize="sm"
-                                            fontWeight="semibold"
-                                            lineHeight={1.2}
-                                            noOfLines={1}
-                                            whiteSpace="nowrap"
-                                            overflow="hidden"
-                                            textOverflow="ellipsis"
+                                    <VStack align="stretch" spacing={3} flex="1" minW={0}>
+                                      <Box
+                                        w="100%"
+                                        maxW="100%"
+                                        overflowX="auto"
+                                        overflowY="hidden"
+                                        sx={{
+                                          scrollbarWidth: "thin",
+                                          "&::-webkit-scrollbar": { height: "6px" },
+                                          "&::-webkit-scrollbar-thumb": {
+                                            borderRadius: "full",
+                                            bg: "blackAlpha.300",
+                                          },
+                                        }}
+                                      >
+                                        <Box display="inline-block" maxW="none">
+                                          <Box
+                                            display="inline-block"
+                                            px={4}
+                                            py={1.5}
+                                            borderRadius="full"
+                                            bg={`${meta.colorScheme}.400`}
+                                            color="gray.900"
+                                            _dark={{
+                                              bg: `${meta.colorScheme}.500`,
+                                              color: "gray.900",
+                                            }}
                                           >
-                                            {pill}
-                                          </Text>
+                                            <Text
+                                              as="span"
+                                              fontSize="sm"
+                                              fontWeight="semibold"
+                                              whiteSpace="nowrap"
+                                              lineHeight={1.35}
+                                            >
+                                              {pill}
+                                            </Text>
+                                          </Box>
                                         </Box>
-                                      </Tooltip>
-                                      <Tooltip label={meta.appName} placement="top" openDelay={200}>
-                                        <Text fontSize="sm" minW={0} w="100%" noOfLines={1} isTruncated lineHeight={1.25}>
-                                          <Text as="span" fontWeight="semibold">
+                                      </Box>
+                                      <Box
+                                        w="100%"
+                                        maxW="100%"
+                                        overflowX="auto"
+                                        sx={{
+                                          scrollbarWidth: "thin",
+                                          "&::-webkit-scrollbar": { height: "6px" },
+                                          "&::-webkit-scrollbar-thumb": {
+                                            borderRadius: "full",
+                                            bg: "blackAlpha.300",
+                                          },
+                                        }}
+                                      >
+                                        <Text
+                                          fontSize="sm"
+                                          whiteSpace="nowrap"
+                                          lineHeight={1.55}
+                                          color="gray.800"
+                                          _dark={{ color: "gray.100" }}
+                                        >
+                                          <Text as="span" fontWeight="bold" color="gray.600" _dark={{ color: "gray.300" }}>
                                             App:{" "}
                                           </Text>
                                           {meta.appName}
                                         </Text>
-                                      </Tooltip>
-                                      <Tooltip label={device.device_id} placement="top" openDelay={200}>
+                                      </Box>
+                                      <Box
+                                        w="100%"
+                                        maxW="100%"
+                                        overflowX="auto"
+                                        sx={{
+                                          scrollbarWidth: "thin",
+                                          "&::-webkit-scrollbar": { height: "6px" },
+                                          "&::-webkit-scrollbar-thumb": {
+                                            borderRadius: "full",
+                                            bg: "blackAlpha.300",
+                                          },
+                                        }}
+                                      >
                                         <Text
                                           fontSize="sm"
                                           fontFamily="mono"
-                                          minW={0}
-                                          w="100%"
-                                          noOfLines={1}
-                                          isTruncated
-                                          lineHeight={1.25}
+                                          whiteSpace="nowrap"
+                                          lineHeight={1.55}
+                                          color="gray.800"
+                                          _dark={{ color: "gray.100" }}
                                         >
-                                          <Text as="span" fontWeight="semibold" fontFamily="body">
+                                          <Text as="span" fontWeight="bold" fontFamily="body" color="gray.600" _dark={{ color: "gray.300" }}>
                                             HWID:{" "}
                                           </Text>
                                           {device.device_id}
                                         </Text>
-                                      </Tooltip>
-                                      <Text fontSize="sm" noOfLines={1} w="100%" isTruncated lineHeight={1.25}>
-                                        <Text as="span" fontWeight="semibold">
+                                      </Box>
+                                      <Text
+                                        fontSize="sm"
+                                        whiteSpace="nowrap"
+                                        lineHeight={1.55}
+                                        color="gray.800"
+                                        _dark={{ color: "gray.100" }}
+                                      >
+                                        <Text as="span" fontWeight="bold" color="gray.600" _dark={{ color: "gray.300" }}>
                                           Last seen:{" "}
                                         </Text>
                                         {seen}
