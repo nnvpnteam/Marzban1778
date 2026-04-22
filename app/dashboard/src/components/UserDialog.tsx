@@ -1084,9 +1084,11 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                           py={1}
                                           borderRadius="full"
                                           bg={`${meta.colorScheme}.400`}
-                                          _dark={{ bg: `${meta.colorScheme}.500` }}
                                           color="gray.900"
-                                          _dark={{ color: "gray.900" }}
+                                          _dark={{
+                                            bg: `${meta.colorScheme}.500`,
+                                            color: "gray.900",
+                                          }}
                                         >
                                           <Text
                                             fontSize="sm"
