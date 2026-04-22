@@ -240,23 +240,26 @@ const DeviceCardOutlineIcon = ({
   return <QuestionMarkCircleIcon {...dim} color="currentColor" />;
 };
 
-/** Header pill text to match layout reference (Desktop | … / Android | … / IOS | …). */
-const buildDeviceCardPill = (meta: DeviceVisualMeta): string => {
+/** Left of | = platform, right = device name (from UA parsing). */
+const getDeviceCardPillParts = (
+  meta: DeviceVisualMeta
+): { platform: string; device: string } => {
   const d = meta.deviceDetail.trim();
-  const short = d.includes(" · ") ? d.split(" · ")[0].trim() : d;
+  const modelOnly = d.includes(" · ") ? d.split(" · ")[0].trim() : d;
   if (meta.platform === "iphone") {
-    const head = meta.platformBadge === "iPadOS" ? "iPadOS" : "IOS";
-    return `${head} | ${short || "iPhone"}`;
+    const platform = meta.platformBadge === "iPadOS" ? "iPadOS" : "iOS";
+    return { platform, device: modelOnly || "iPhone" };
   }
   if (meta.platform === "android") {
-    return `Android | ${short || "Android device"}`;
+    return { platform: "Android", device: modelOnly || "Android device" };
   }
   if (meta.platform === "desktop") {
-    if (d.startsWith("PC ·")) return `Desktop | ${d.slice(4).trim()}`;
-    if (d.startsWith("Mac ·")) return `Desktop | ${d.slice(5).trim()}`;
-    return `Desktop | ${d || short || "Desktop"}`;
+    let device = d;
+    if (d.startsWith("PC ·")) device = d.slice(4).trim();
+    else if (d.startsWith("Mac ·")) device = d.slice(5).trim();
+    return { platform: "Desktop", device: device || "Desktop" };
   }
-  return `${meta.platformBadge} | ${short || "Unknown"}`;
+  return { platform: meta.platformBadge, device: modelOnly || "Unknown" };
 };
 
 const getDevicePillColors = (
@@ -1041,7 +1044,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
                             {editingUser.hwid_devices.map((device) => {
                               const meta = getDeviceVisualMeta(device.user_agent);
                               const seen = dayjs(device.last_seen_at).format("DD.MM.YYYY");
-                              const pill = buildDeviceCardPill(meta);
+                              const pillParts = getDeviceCardPillParts(meta);
                               const pillColors = getDevicePillColors(meta.platform);
                               return (
                                 <Box
@@ -1072,25 +1075,53 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                     <VStack align="stretch" spacing={2} flex="1" minW={0}>
                                       <Box alignSelf="flex-start" maxW="100%">
                                         <Box
-                                          as="span"
                                           display="inline-flex"
                                           alignItems="center"
                                           justifyContent="center"
-                                          px={2.5}
-                                          py={0.5}
+                                          px={4}
+                                          py={1.5}
                                           borderRadius="md"
                                           bg={pillColors.bg}
                                           color={pillColors.fg}
                                         >
-                                          <Text
-                                            as="span"
-                                            fontSize="xs"
-                                            fontWeight="normal"
-                                            lineHeight={1.2}
-                                            fontFamily="body"
+                                          <HStack
+                                            spacing={1.5}
+                                            alignItems="center"
+                                            maxW="100%"
                                           >
-                                            {pill}
-                                          </Text>
+                                            <Text
+                                              as="span"
+                                              fontSize="xs"
+                                              fontWeight="normal"
+                                              lineHeight={1.25}
+                                              fontFamily="body"
+                                              flexShrink={0}
+                                            >
+                                              {pillParts.platform}
+                                            </Text>
+                                            <Text
+                                              as="span"
+                                              fontSize="xs"
+                                              fontWeight="normal"
+                                              lineHeight={1.25}
+                                              opacity={0.85}
+                                              flexShrink={0}
+                                            >
+                                              |
+                                            </Text>
+                                            <Text
+                                              as="span"
+                                              fontSize="xs"
+                                              fontWeight="normal"
+                                              lineHeight={1.25}
+                                              fontFamily="body"
+                                              minW={0}
+                                              noOfLines={1}
+                                              isTruncated
+                                            >
+                                              {pillParts.device}
+                                            </Text>
+                                          </HStack>
                                         </Box>
                                       </Box>
                                       <Text
