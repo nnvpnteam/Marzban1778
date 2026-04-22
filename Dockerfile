@@ -23,7 +23,9 @@ COPY app/dashboard/package*.json /dashboard/
 RUN npm ci
 
 COPY app/dashboard /dashboard
-RUN npm run build
+RUN npm run build \
+    && rm -rf /dashboard/build \
+    && cp -r /dashboard/dist /dashboard/build
 
 FROM python:$PYTHON_VERSION-slim
 
