@@ -267,13 +267,13 @@ const getDevicePillColors = (
 ): { bg: string; fg: string } => {
   switch (platform) {
     case "iphone":
-      return { bg: "#FF9500", fg: "#111111" };
+      return { bg: "#FF9500", fg: "#FFFFFF" };
     case "android":
-      return { bg: "#30D158", fg: "#111111" };
+      return { bg: "#30D158", fg: "#FFFFFF" };
     case "desktop":
-      return { bg: "#7EC8E3", fg: "#111111" };
+      return { bg: "#7EC8E3", fg: "#FFFFFF" };
     default:
-      return { bg: "#C4C4C4", fg: "#111111" };
+      return { bg: "#6B7280", fg: "#FFFFFF" };
   }
 };
 
@@ -1055,141 +1055,161 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                   borderWidth="1px"
                                   borderRadius="md"
                                   overflow="hidden"
-                                  bg="#ECECEC"
-                                  borderColor="#5C5C5C"
+                                  bg="white"
+                                  borderColor="light-border"
                                   _dark={{
                                     bg: "gray.700",
                                     borderColor: "gray.500",
                                   }}
+                                  fontFamily="body"
                                 >
-                                  <Flex
-                                    align="center"
-                                    gap={{ base: 2.5, md: 3 }}
+                                  <Grid
+                                    w="100%"
                                     minW={0}
                                     py={{ base: 2.5, md: 3 }}
                                     px={{ base: 2.5, md: 3 }}
+                                    gap={{ base: 2, md: 3 }}
+                                    templateAreas={{
+                                      base: `"devicon del" "main main"`,
+                                      md: `"devicon main del"`,
+                                    }}
+                                    gridTemplateColumns={{
+                                      base: "auto 1fr",
+                                      md: "auto 1fr auto",
+                                    }}
+                                    alignItems={{ base: "start", md: "center" }}
                                   >
-                                    <Box flexShrink={0} color="#1a1a1a" _dark={{ color: "gray.100" }} lineHeight={0}>
-                                      <DeviceCardOutlineIcon platform={meta.platform} />
-                                    </Box>
-                                    <VStack align="stretch" spacing={2} flex="1" minW={0}>
-                                      <Box alignSelf="flex-start" maxW="100%">
-                                        <Box
-                                          display="inline-flex"
-                                          alignItems="center"
-                                          justifyContent="center"
-                                          px={4}
-                                          py={1.5}
-                                          borderRadius="md"
-                                          bg={pillColors.bg}
-                                          color={pillColors.fg}
-                                        >
-                                          <HStack
-                                            spacing={1.5}
-                                            alignItems="center"
-                                            maxW="100%"
-                                          >
-                                            <Text
-                                              as="span"
-                                              fontSize="xs"
-                                              fontWeight="normal"
-                                              lineHeight={1.25}
-                                              fontFamily="body"
-                                              flexShrink={0}
-                                            >
-                                              {pillParts.platform}
-                                            </Text>
-                                            <Text
-                                              as="span"
-                                              fontSize="xs"
-                                              fontWeight="normal"
-                                              lineHeight={1.25}
-                                              opacity={0.85}
-                                              flexShrink={0}
-                                            >
-                                              |
-                                            </Text>
-                                            <Text
-                                              as="span"
-                                              fontSize="xs"
-                                              fontWeight="normal"
-                                              lineHeight={1.25}
-                                              fontFamily="body"
-                                              minW={0}
-                                              noOfLines={1}
-                                              isTruncated
-                                            >
-                                              {pillParts.device}
-                                            </Text>
-                                          </HStack>
-                                        </Box>
+                                    <GridItem area="devicon" placeSelf={{ base: "start", md: "center" }}>
+                                      <Box color="#1a1a1a" _dark={{ color: "gray.100" }} lineHeight={0}>
+                                        <DeviceCardOutlineIcon platform={meta.platform} />
                                       </Box>
-                                      <Text
-                                        fontSize="11px"
-                                        fontFamily="mono"
-                                        lineHeight={1.4}
-                                        color="#1a1a1a"
-                                        _dark={{ color: "gray.100" }}
-                                        wordBreak="break-all"
-                                        overflowWrap="anywhere"
-                                      >
-                                        <Text as="span" fontWeight="semibold" fontFamily="body">
-                                          HWID:{" "}
+                                    </GridItem>
+                                    <GridItem area="main" minW={0}>
+                                      <VStack align="stretch" spacing={2} w="100%">
+                                        <Box alignSelf="flex-start" maxW="100%">
+                                          <Box
+                                            display="inline-flex"
+                                            alignItems="center"
+                                            justifyContent="center"
+                                            px={4}
+                                            py={1.5}
+                                            borderRadius="md"
+                                            bg={pillColors.bg}
+                                            color={pillColors.fg}
+                                          >
+                                            <HStack
+                                              spacing={1.5}
+                                              alignItems="center"
+                                              maxW="100%"
+                                            >
+                                              <Text
+                                                as="span"
+                                                fontSize="xs"
+                                                fontWeight="normal"
+                                                lineHeight={1.25}
+                                                fontFamily="body"
+                                                flexShrink={0}
+                                              >
+                                                {pillParts.platform}
+                                              </Text>
+                                              <Text
+                                                as="span"
+                                                fontSize="xs"
+                                                fontWeight="normal"
+                                                lineHeight={1.25}
+                                                opacity={0.9}
+                                                flexShrink={0}
+                                              >
+                                                |
+                                              </Text>
+                                              <Text
+                                                as="span"
+                                                fontSize="xs"
+                                                fontWeight="normal"
+                                                lineHeight={1.25}
+                                                fontFamily="body"
+                                                minW={0}
+                                                noOfLines={1}
+                                                isTruncated
+                                              >
+                                                {pillParts.device}
+                                              </Text>
+                                            </HStack>
+                                          </Box>
+                                        </Box>
+                                        <Text
+                                          fontSize="11px"
+                                          fontFamily="body"
+                                          lineHeight={1.4}
+                                          color="#1a1a1a"
+                                          _dark={{ color: "gray.100" }}
+                                          wordBreak="break-all"
+                                          overflowWrap="anywhere"
+                                        >
+                                          <Text as="span" fontWeight="semibold" fontFamily="body">
+                                            HWID:{" "}
+                                          </Text>
+                                          {device.device_id}
                                         </Text>
-                                        {device.device_id}
-                                      </Text>
-                                      <Text
-                                        fontSize="11px"
-                                        lineHeight={1.4}
-                                        color="#1a1a1a"
-                                        _dark={{ color: "gray.100" }}
-                                        whiteSpace="nowrap"
-                                        overflow="hidden"
-                                        textOverflow="ellipsis"
-                                      >
-                                        <Text as="span" fontWeight="semibold">
-                                          App:{" "}
+                                        <Text
+                                          fontSize="11px"
+                                          fontFamily="body"
+                                          lineHeight={1.4}
+                                          color="#1a1a1a"
+                                          _dark={{ color: "gray.100" }}
+                                          whiteSpace="nowrap"
+                                          overflow="hidden"
+                                          textOverflow="ellipsis"
+                                        >
+                                          <Text as="span" fontWeight="semibold" fontFamily="body">
+                                            App:{" "}
+                                          </Text>
+                                          {meta.appName}
                                         </Text>
-                                        {meta.appName}
-                                      </Text>
-                                      <Text
-                                        fontSize="11px"
-                                        lineHeight={1.4}
-                                        color="#1a1a1a"
-                                        _dark={{ color: "gray.100" }}
-                                        whiteSpace="nowrap"
-                                      >
-                                        <Text as="span" fontWeight="semibold">
-                                          Last seen:{" "}
+                                        <Text
+                                          fontSize="11px"
+                                          fontFamily="body"
+                                          lineHeight={1.4}
+                                          color="#1a1a1a"
+                                          _dark={{ color: "gray.100" }}
+                                          whiteSpace="nowrap"
+                                        >
+                                          <Text as="span" fontWeight="semibold" fontFamily="body">
+                                            Last seen:{" "}
+                                          </Text>
+                                          {seen}
                                         </Text>
-                                        {seen}
-                                      </Text>
-                                    </VStack>
-                                    <Tooltip label="Delete device" placement="top">
-                                      <IconButton
-                                        aria-label="Delete device"
-                                        flexShrink={0}
-                                        alignSelf="center"
-                                        size="xs"
-                                        variant="ghost"
-                                        color="red.600"
-                                        _hover={{ bg: "blackAlpha.100" }}
-                                        _dark={{ color: "red.400", _hover: { bg: "whiteAlpha.200" } }}
-                                        isLoading={deletingDeviceId === device.device_id}
-                                        onClick={() => {
-                                          if (!editingUser) return;
-                                          setDeletingDeviceId(device.device_id);
-                                          removeUserDevice(editingUser, device.device_id)
-                                            .catch((err) => {
-                                              setError(err?.response?._data?.detail || "Failed to delete device");
-                                            })
-                                            .finally(() => setDeletingDeviceId(null));
-                                        }}
-                                      >
-                                        <TrashIcon width={18} height={18} />
-                                      </IconButton>
-                                    </Tooltip>
-                                  </Flex>
+                                      </VStack>
+                                    </GridItem>
+                                    <GridItem
+                                      area="del"
+                                      justifySelf={{ base: "end", md: "center" }}
+                                      alignSelf={{ base: "start", md: "center" }}
+                                    >
+                                      <Tooltip label="Delete device" placement="top">
+                                        <IconButton
+                                          aria-label="Delete device"
+                                          size="xs"
+                                          variant="ghost"
+                                          color="red.600"
+                                          _hover={{ bg: "blackAlpha.100" }}
+                                          _dark={{ color: "red.400", _hover: { bg: "whiteAlpha.200" } }}
+                                          isLoading={deletingDeviceId === device.device_id}
+                                          onClick={() => {
+                                            if (!editingUser) return;
+                                            setDeletingDeviceId(device.device_id);
+                                            removeUserDevice(editingUser, device.device_id)
+                                              .catch((err) => {
+                                                setError(err?.response?._data?.detail || "Failed to delete device");
+                                              })
+                                              .finally(() => setDeletingDeviceId(null));
+                                          }}
+                                        >
+                                          <TrashIcon width={18} height={18} />
+                                        </IconButton>
+                                      </Tooltip>
+                                    </GridItem>
+                                  </Grid>
                                 </Box>
                               );
                             })}
