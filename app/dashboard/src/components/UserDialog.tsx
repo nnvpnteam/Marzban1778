@@ -582,7 +582,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size={{ base: "full", md: "4xl" }}>
+    <Modal isOpen={isOpen} onClose={onClose} size={{ base: "full", md: "5xl" }}>
       <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
       <FormProvider {...form}>
         <ModalContent mx={{ base: 0, md: 3 }} my={{ base: 0, md: "auto" }}>
@@ -608,7 +608,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
               <Grid
                 templateColumns={{
                   base: "minmax(0, 1fr)",
-                  md: "minmax(0, 1fr) minmax(0, 1.18fr)",
+                  md: "minmax(0, 1fr) minmax(0, 1.22fr)",
                 }}
                 gap={3}
                 w="full"
@@ -1041,8 +1041,8 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                     <IconButton
                                       aria-label="Delete device"
                                       position="absolute"
-                                      top={0.5}
-                                      right={0.5}
+                                      top={1}
+                                      right={1}
                                       zIndex={1}
                                       size="xs"
                                       colorScheme="red"
@@ -1063,23 +1063,23 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                   </Tooltip>
                                   <Flex
                                     align="flex-start"
-                                    gap={{ base: 2, md: 2.5 }}
+                                    gap={{ base: 2.5, md: 3 }}
                                     minW={0}
-                                    py={1}
-                                    px={2}
-                                    pr={{ base: 9, md: 10 }}
+                                    py={{ base: 1.5, md: 1.5 }}
+                                    px={{ base: 2.5, md: 3 }}
+                                    pr={{ base: 10, md: 11 }}
                                   >
-                                    <Box flexShrink={0} pt={0.5} transform="scale(0.88)">
+                                    <Box flexShrink={0} pt={0.5} transform="scale(0.92)">
                                       <Icon color={`${meta.colorScheme}.400`}>
                                         {getDeviceIcon(meta.platform)}
                                       </Icon>
                                     </Box>
-                                    <VStack align="flex-start" spacing={0.5} flex="1" minW={0}>
+                                    <VStack align="flex-start" spacing={1} flex="1" minW={0}>
                                       <Tooltip label={pill} placement="top" openDelay={200}>
                                         <Box
                                           maxW="100%"
-                                          px={2}
-                                          py={0.25}
+                                          px={2.5}
+                                          py={0.5}
                                           borderRadius="full"
                                           bg={`${meta.colorScheme}.400`}
                                           color="gray.900"
@@ -1089,9 +1089,9 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                           }}
                                         >
                                           <Text
-                                            fontSize="xs"
+                                            fontSize="sm"
                                             fontWeight="semibold"
-                                            lineHeight={1.15}
+                                            lineHeight={1.2}
                                             noOfLines={1}
                                             whiteSpace="nowrap"
                                             overflow="hidden"
@@ -1102,7 +1102,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                         </Box>
                                       </Tooltip>
                                       <Tooltip label={meta.appName} placement="top" openDelay={200}>
-                                        <Text fontSize="xs" minW={0} w="100%" noOfLines={1} isTruncated lineHeight={1.2}>
+                                        <Text fontSize="sm" minW={0} w="100%" noOfLines={1} isTruncated lineHeight={1.25}>
                                           <Text as="span" fontWeight="semibold">
                                             App:{" "}
                                           </Text>
@@ -1111,13 +1111,13 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                       </Tooltip>
                                       <Tooltip label={device.device_id} placement="top" openDelay={200}>
                                         <Text
-                                          fontSize="xs"
+                                          fontSize="sm"
                                           fontFamily="mono"
                                           minW={0}
                                           w="100%"
                                           noOfLines={1}
                                           isTruncated
-                                          lineHeight={1.2}
+                                          lineHeight={1.25}
                                         >
                                           <Text as="span" fontWeight="semibold" fontFamily="body">
                                             HWID:{" "}
@@ -1125,7 +1125,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                           {device.device_id}
                                         </Text>
                                       </Tooltip>
-                                      <Text fontSize="xs" noOfLines={1} w="100%" isTruncated lineHeight={1.2}>
+                                      <Text fontSize="sm" noOfLines={1} w="100%" isTruncated lineHeight={1.25}>
                                         <Text as="span" fontWeight="semibold">
                                           Last seen:{" "}
                                         </Text>
