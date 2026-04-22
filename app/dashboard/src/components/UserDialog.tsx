@@ -1,7 +1,6 @@
 import {
   Alert,
   AlertIcon,
-  Badge,
   Box,
   Button,
   Collapse,
@@ -243,6 +242,14 @@ const getDeviceIcon = (platform: DeviceVisualMeta["platform"]) => {
   if (platform === "desktop") return <DeviceDesktopIcon />;
   if (platform === "iphone" || platform === "android") return <DevicePhoneIcon />;
   return <DeviceUnknownIcon />;
+};
+
+/** Top pill: "IOS | iPhone 16 Pro" style from parsed meta */
+const buildDeviceCardPill = (meta: DeviceVisualMeta): string => {
+  const plat = meta.platformBadge.toUpperCase();
+  const detail = meta.deviceDetail.trim();
+  const short = detail.includes(" · ") ? detail.split(" · ")[0].trim() : detail;
+  return `${plat} | ${short}`;
 };
 
 export type UserDialogProps = {};
@@ -1011,7 +1018,8 @@ export const UserDialog: FC<UserDialogProps> = () => {
                           <VStack align="stretch" gap={{ base: 2, md: 2 }}>
                             {editingUser.hwid_devices.map((device) => {
                               const meta = getDeviceVisualMeta(device.user_agent);
-                              const seen = dayjs(device.last_seen_at).format("YYYY-MM-DD HH:mm");
+                              const seen = dayjs(device.last_seen_at).format("DD.MM.YYYY HH:mm");
+                              const pill = buildDeviceCardPill(meta);
                               return (
                                 <Box
                                   key={device.device_id}
@@ -1020,174 +1028,110 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                   minW={0}
                                   position="relative"
                                   borderWidth="1px"
-                                  borderRadius="md"
+                                  borderRadius="lg"
                                   overflow="hidden"
-                                  bg="blackAlpha.20"
-                                  _dark={{ bg: "whiteAlpha.50" }}
+                                  bg="gray.100"
+                                  borderColor="gray.200"
+                                  _dark={{
+                                    bg: "gray.700",
+                                    borderColor: "gray.600",
+                                  }}
                                   sx={{ aspectRatio: "16 / 9" }}
                                 >
-                                  <Grid
-                                    templateColumns={{ base: "28px 1fr 26px", md: "32px 1fr 28px" }}
-                                    templateRows="auto auto minmax(0, 1fr) auto"
-                                    gap={{ base: 0.5, md: 1 }}
-                                    columnGap={{ base: 1, md: 1.5 }}
-                                    p={{ base: 1.5, md: 2 }}
+                                  <Tooltip label="Delete device" placement="left">
+                                    <IconButton
+                                      aria-label="Delete device"
+                                      position="absolute"
+                                      top={2}
+                                      right={2}
+                                      zIndex={1}
+                                      size="sm"
+                                      colorScheme="red"
+                                      variant="ghost"
+                                      isLoading={deletingDeviceId === device.device_id}
+                                      onClick={() => {
+                                        if (!editingUser) return;
+                                        setDeletingDeviceId(device.device_id);
+                                        removeUserDevice(editingUser, device.device_id)
+                                          .catch((err) => {
+                                            setError(err?.response?._data?.detail || "Failed to delete device");
+                                          })
+                                          .finally(() => setDeletingDeviceId(null));
+                                      }}
+                                    >
+                                      <DeviceRemoveIcon />
+                                    </IconButton>
+                                  </Tooltip>
+                                  <Flex
+                                    align="center"
+                                    gap={{ base: 3, md: 4 }}
                                     h="100%"
                                     minH={0}
                                     minW={0}
+                                    p={{ base: 3, md: 4 }}
+                                    pr={{ base: 12, md: 14 }}
                                   >
-                                    <GridItem
-                                      rowStart={1}
-                                      rowEnd={5}
-                                      colStart={1}
-                                      colEnd={2}
-                                      display="flex"
-                                      alignItems="center"
-                                      justifyContent="center"
-                                      minW={0}
-                                    >
-                                      <Box transform="scale(0.72)" transformOrigin="center">
-                                        <Icon color={`${meta.colorScheme}.400`}>
-                                          {getDeviceIcon(meta.platform)}
-                                        </Icon>
-                                      </Box>
-                                    </GridItem>
-                                    <GridItem
-                                      rowStart={1}
-                                      rowEnd={2}
-                                      colStart={2}
-                                      colEnd={3}
-                                      minW={0}
-                                      overflow="hidden"
-                                      pr={1}
-                                    >
-                                      <Tooltip label={meta.appName} placement="top" openDelay={300}>
-                                        <Text
-                                          fontSize={{ base: "xs", md: "sm" }}
-                                          fontWeight="semibold"
-                                          lineHeight={1.15}
-                                          noOfLines={1}
-                                          whiteSpace="nowrap"
-                                          overflow="hidden"
-                                          textOverflow="ellipsis"
+                                    <Box flexShrink={0} alignSelf="center">
+                                      <Icon color={`${meta.colorScheme}.400`}>
+                                        {getDeviceIcon(meta.platform)}
+                                      </Icon>
+                                    </Box>
+                                    <VStack align="flex-start" spacing={2} flex="1" minW={0} justify="center">
+                                      <Tooltip label={pill} placement="top" openDelay={200}>
+                                        <Box
+                                          maxW="100%"
+                                          px={3}
+                                          py={1}
+                                          borderRadius="full"
+                                          bg={`${meta.colorScheme}.400`}
+                                          _dark={{ bg: `${meta.colorScheme}.500` }}
+                                          color="gray.900"
+                                          _dark={{ color: "gray.900" }}
                                         >
+                                          <Text
+                                            fontSize="sm"
+                                            fontWeight="semibold"
+                                            lineHeight={1.2}
+                                            noOfLines={1}
+                                            whiteSpace="nowrap"
+                                            overflow="hidden"
+                                            textOverflow="ellipsis"
+                                          >
+                                            {pill}
+                                          </Text>
+                                        </Box>
+                                      </Tooltip>
+                                      <Tooltip label={meta.appName} placement="top" openDelay={200}>
+                                        <Text fontSize="sm" minW={0} w="100%" noOfLines={1} isTruncated>
+                                          <Text as="span" fontWeight="semibold">
+                                            App:{" "}
+                                          </Text>
                                           {meta.appName}
                                         </Text>
                                       </Tooltip>
-                                    </GridItem>
-                                    <GridItem
-                                      rowStart={1}
-                                      rowEnd={5}
-                                      colStart={3}
-                                      colEnd={4}
-                                      display="flex"
-                                      alignItems="flex-start"
-                                      justifyContent="center"
-                                    >
-                                      <Tooltip label="Delete device" placement="left">
-                                        <IconButton
-                                          aria-label="Delete device"
-                                          size="xs"
-                                          colorScheme="red"
-                                          variant="ghost"
-                                          minW="26px"
-                                          h="26px"
-                                          isLoading={deletingDeviceId === device.device_id}
-                                          onClick={() => {
-                                            if (!editingUser) return;
-                                            setDeletingDeviceId(device.device_id);
-                                            removeUserDevice(editingUser, device.device_id)
-                                              .catch((err) => {
-                                                setError(err?.response?._data?.detail || "Failed to delete device");
-                                              })
-                                              .finally(() => setDeletingDeviceId(null));
-                                          }}
-                                        >
-                                          <DeviceRemoveIcon />
-                                        </IconButton>
-                                      </Tooltip>
-                                    </GridItem>
-                                    <GridItem
-                                      rowStart={2}
-                                      rowEnd={3}
-                                      colStart={2}
-                                      colEnd={3}
-                                      minW={0}
-                                      overflow="hidden"
-                                    >
-                                      <HStack spacing={1} align="center" minW={0} flexWrap="nowrap">
-                                        <Badge
-                                          colorScheme={meta.colorScheme}
-                                          fontSize="0.55rem"
-                                          px={1}
-                                          py={0}
-                                          borderRadius="sm"
-                                          flexShrink={0}
-                                          textTransform="none"
-                                        >
-                                          {meta.platformBadge}
-                                        </Badge>
-                                        <Text
-                                          fontSize="2xs"
-                                          color="gray.500"
-                                          noOfLines={1}
-                                          minW={0}
-                                          overflow="hidden"
-                                          textOverflow="ellipsis"
-                                          whiteSpace="nowrap"
-                                        >
-                                          {seen}
-                                        </Text>
-                                      </HStack>
-                                    </GridItem>
-                                    <GridItem
-                                      rowStart={3}
-                                      rowEnd={4}
-                                      colStart={2}
-                                      colEnd={3}
-                                      minH={0}
-                                      minW={0}
-                                      overflow="hidden"
-                                      alignSelf="stretch"
-                                    >
-                                      <Tooltip label={meta.deviceDetail} placement="top" openDelay={300}>
-                                        <Text
-                                          fontSize="2xs"
-                                          lineHeight={1.2}
-                                          opacity={0.92}
-                                          noOfLines={2}
-                                          overflow="hidden"
-                                          wordBreak="break-word"
-                                          overflowWrap="break-word"
-                                        >
-                                          {meta.deviceDetail}
-                                        </Text>
-                                      </Tooltip>
-                                    </GridItem>
-                                    <GridItem
-                                      rowStart={4}
-                                      rowEnd={5}
-                                      colStart={2}
-                                      colEnd={3}
-                                      minW={0}
-                                      overflow="hidden"
-                                    >
                                       <Tooltip label={device.device_id} placement="top" openDelay={200}>
                                         <Text
-                                          as="div"
-                                          fontSize="2xs"
+                                          fontSize="sm"
                                           fontFamily="mono"
-                                          opacity={0.8}
+                                          minW={0}
+                                          w="100%"
                                           noOfLines={1}
-                                          whiteSpace="nowrap"
-                                          overflow="hidden"
-                                          textOverflow="ellipsis"
+                                          isTruncated
                                         >
+                                          <Text as="span" fontWeight="semibold" fontFamily="body">
+                                            HWID:{" "}
+                                          </Text>
                                           {device.device_id}
                                         </Text>
                                       </Tooltip>
-                                    </GridItem>
-                                  </Grid>
+                                      <Text fontSize="sm" noOfLines={1} w="100%" isTruncated>
+                                        <Text as="span" fontWeight="semibold">
+                                          Last seen:{" "}
+                                        </Text>
+                                        {seen}
+                                      </Text>
+                                    </VStack>
+                                  </Flex>
                                 </Box>
                               );
                             })}
