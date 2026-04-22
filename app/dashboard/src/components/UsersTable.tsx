@@ -654,15 +654,15 @@ const SubscriptionDevicesLabel: FC<{ user: User }> = ({ user }) => {
       px={2}
       py={0.5}
       borderRadius="md"
-      bg="primary.100"
-      color="primary.700"
+      bg="primary.500"
+      color="white"
       borderWidth="1px"
-      borderColor="primary.300"
+      borderColor="primary.600"
       flexShrink={0}
       _dark={{
-        bg: "primary.900",
-        color: "primary.100",
-        borderColor: "primary.500",
+        bg: "primary.500",
+        color: "white",
+        borderColor: "primary.400",
       }}
     >
       Devices {deviceCount}/{limitLabel}
