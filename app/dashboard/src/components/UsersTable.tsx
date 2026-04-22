@@ -356,6 +356,7 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                         <div className="flex-status">
                           <OnlineBadge lastOnline={user.online_at} />
                           <Text isTruncated>{user.username}</Text>
+                          <SubscriptionDevicesLabel user={user} />
                         </div>
                       </Td>
                       <Td borderBottom={0} minW="50px" pl={0} pr={0}>
@@ -594,6 +595,7 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                     <div className="flex-status">
                       <OnlineBadge lastOnline={user.online_at} />
                       {user.username}
+                      <SubscriptionDevicesLabel user={user} />
                       <OnlineStatus lastOnline={user.online_at} />
                     </div>
                   </Td>
@@ -636,14 +638,40 @@ type ActionButtonsProps = {
   user: User;
 };
 
-const ActionButtons: FC<ActionButtonsProps> = ({ user }) => {
-  const { setQRCode, setSubLink } = useDashboard();
+const SubscriptionDevicesLabel: FC<{ user: User }> = ({ user }) => {
   const deviceCount = user.hwid_devices?.length || 0;
   const effectiveLimit = user.effective_hwid_device_limit;
   const limitLabel =
     effectiveLimit === 0 || effectiveLimit === null || effectiveLimit === undefined
       ? "∞"
       : String(effectiveLimit);
+  return (
+    <Text
+      as="span"
+      fontSize="xs"
+      fontWeight="semibold"
+      whiteSpace="nowrap"
+      px={2}
+      py={0.5}
+      borderRadius="md"
+      bg="primary.100"
+      color="primary.700"
+      borderWidth="1px"
+      borderColor="primary.300"
+      flexShrink={0}
+      _dark={{
+        bg: "primary.900",
+        color: "primary.100",
+        borderColor: "primary.500",
+      }}
+    >
+      Devices {deviceCount}/{limitLabel}
+    </Text>
+  );
+};
+
+const ActionButtons: FC<ActionButtonsProps> = ({ user }) => {
+  const { setQRCode, setSubLink } = useDashboard();
 
   const proxyLinks = user.links.join("\r\n");
 
@@ -663,14 +691,6 @@ const ActionButtons: FC<ActionButtonsProps> = ({ user }) => {
         e.stopPropagation();
       }}
     >
-      <Text
-        fontSize="xs"
-        color="gray.500"
-        minW="70px"
-        textAlign="right"
-      >
-        Devices: {deviceCount}/{limitLabel}
-      </Text>
       <CopyToClipboard
         text={
           user.subscription_url.startsWith("/")
