@@ -39,7 +39,6 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { resetStrategy } from "constants/UserSettings";
 import { FilterUsageType, useDashboard } from "contexts/DashboardContext";
-import { useNodesQuery } from "contexts/NodesContext";
 import dayjs from "dayjs";
 import { FC, useEffect, useState } from "react";
 import ReactApexChart from "react-apexcharts";
@@ -262,8 +261,6 @@ export const UserDialog: FC<UserDialogProps> = () => {
   const [error, setError] = useState<string | null>("");
   const toast = useToast();
   const { t, i18n } = useTranslation();
-  const { data: nodes } = useNodesQuery();
-
   const { colorMode } = useColorMode();
 
   const [usageVisible, setUsageVisible] = useState(false);
@@ -597,37 +594,6 @@ export const UserDialog: FC<UserDialogProps> = () => {
                           }}
                         />
                       </FormControl>
-                      {!!nodes?.length && (
-                        <FormControl mb={"10px"}>
-                          <FormLabel>Per-node traffic limits</FormLabel>
-                          <VStack align="stretch" gap={2}>
-                            {nodes.map((node) => (
-                              <Controller
-                                key={node.id}
-                                control={form.control}
-                                name={`node_data_limits.${node.id}` as const}
-                                render={({ field }) => (
-                                  <>
-                                    <Input
-                                      label={`${node.name}`}
-                                      endAdornment="GB"
-                                      type="number"
-                                      size="sm"
-                                      borderRadius="6px"
-                                      onChange={field.onChange}
-                                      disabled={disabled}
-                                      value={field.value ? String(field.value) : ""}
-                                    />
-                                    <FormHelperText>
-                                      Leave empty to disable a dedicated limit for this node
-                                    </FormHelperText>
-                                  </>
-                                )}
-                              />
-                            ))}
-                          </VStack>
-                        </FormControl>
-                      )}
                       <Collapse
                         in={!!(dataLimit && dataLimit > 0)}
                         animateOpacity

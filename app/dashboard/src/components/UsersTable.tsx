@@ -638,6 +638,7 @@ type ActionButtonsProps = {
 
 const ActionButtons: FC<ActionButtonsProps> = ({ user }) => {
   const { setQRCode, setSubLink } = useDashboard();
+  const deviceCount = user.hwid_devices?.length || 0;
 
   const proxyLinks = user.links.join("\r\n");
 
@@ -657,6 +658,14 @@ const ActionButtons: FC<ActionButtonsProps> = ({ user }) => {
         e.stopPropagation();
       }}
     >
+      <Text
+        fontSize="xs"
+        color="gray.500"
+        minW="70px"
+        textAlign="right"
+      >
+        Devices: {deviceCount}
+      </Text>
       <CopyToClipboard
         text={
           user.subscription_url.startsWith("/")
