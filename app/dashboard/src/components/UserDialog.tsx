@@ -240,12 +240,38 @@ const DeviceCardOutlineIcon = ({
   return <QuestionMarkCircleIcon {...dim} color="currentColor" />;
 };
 
-/** Top pill: "IOS | iPhone 16 Pro" style from parsed meta */
+/** Header pill text to match layout reference (Desktop | … / Android | … / IOS | …). */
 const buildDeviceCardPill = (meta: DeviceVisualMeta): string => {
-  const plat = meta.platformBadge.toUpperCase();
-  const detail = meta.deviceDetail.trim();
-  const short = detail.includes(" · ") ? detail.split(" · ")[0].trim() : detail;
-  return `${plat} | ${short}`;
+  const d = meta.deviceDetail.trim();
+  const short = d.includes(" · ") ? d.split(" · ")[0].trim() : d;
+  if (meta.platform === "iphone") {
+    const head = meta.platformBadge === "iPadOS" ? "iPadOS" : "IOS";
+    return `${head} | ${short || "iPhone"}`;
+  }
+  if (meta.platform === "android") {
+    return `Android | ${short || "Android device"}`;
+  }
+  if (meta.platform === "desktop") {
+    if (d.startsWith("PC ·")) return `Desktop | ${d.slice(4).trim()}`;
+    if (d.startsWith("Mac ·")) return `Desktop | ${d.slice(5).trim()}`;
+    return `Desktop | ${d || short || "Desktop"}`;
+  }
+  return `${meta.platformBadge} | ${short || "Unknown"}`;
+};
+
+const getDevicePillColors = (
+  platform: DeviceVisualMeta["platform"]
+): { bg: string; fg: string } => {
+  switch (platform) {
+    case "iphone":
+      return { bg: "#FF9500", fg: "#111111" };
+    case "android":
+      return { bg: "#30D158", fg: "#111111" };
+    case "desktop":
+      return { bg: "#7EC8E3", fg: "#111111" };
+    default:
+      return { bg: "#C4C4C4", fg: "#111111" };
+  }
 };
 
 export type UserDialogProps = {};
@@ -1016,6 +1042,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
                               const meta = getDeviceVisualMeta(device.user_agent);
                               const seen = dayjs(device.last_seen_at).format("DD.MM.YYYY");
                               const pill = buildDeviceCardPill(meta);
+                              const pillColors = getDevicePillColors(meta.platform);
                               return (
                                 <Box
                                   key={device.device_id}
@@ -1025,10 +1052,10 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                   borderWidth="1px"
                                   borderRadius="lg"
                                   overflow="hidden"
-                                  bg="#D9D9D9"
-                                  borderColor="#BDBDBD"
+                                  bg="#ECECEC"
+                                  borderColor="#5C5C5C"
                                   _dark={{
-                                    bg: "gray.600",
+                                    bg: "gray.700",
                                     borderColor: "gray.500",
                                   }}
                                 >
@@ -1039,127 +1066,65 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                     py={{ base: 4, md: 5 }}
                                     px={{ base: 4, md: 5 }}
                                   >
-                                    <Box flexShrink={0} color="gray.900" _dark={{ color: "gray.100" }} lineHeight={0}>
+                                    <Box flexShrink={0} color="#1a1a1a" _dark={{ color: "gray.100" }} lineHeight={0}>
                                       <DeviceCardOutlineIcon platform={meta.platform} />
                                     </Box>
-                                    <VStack align="stretch" spacing={2.5} flex="1" minW={0}>
-                                      <HStack align="center" spacing={3} minW={0} w="100%">
+                                    <VStack align="stretch" spacing={3} flex="1" minW={0}>
+                                      <Box alignSelf="flex-start" maxW="100%">
                                         <Box
-                                          flex="1"
-                                          minW={0}
-                                          overflowX="auto"
-                                          sx={{
-                                            scrollbarWidth: "thin",
-                                            "&::-webkit-scrollbar": { height: "5px" },
-                                            "&::-webkit-scrollbar-thumb": {
-                                              borderRadius: "full",
-                                              bg: "blackAlpha.400",
-                                            },
-                                          }}
+                                          as="span"
+                                          display="inline-block"
+                                          px={4}
+                                          py={1.5}
+                                          borderRadius="full"
+                                          bg={pillColors.bg}
+                                          color={pillColors.fg}
                                         >
-                                          <Box
+                                          <Text
                                             as="span"
-                                            display="inline-block"
-                                            px={4}
-                                            py={1.5}
-                                            borderRadius="full"
-                                            bg="#FF8C00"
-                                            color="#000000"
-                                            _dark={{ bg: "#FF8C00", color: "#000000" }}
+                                            fontSize="sm"
+                                            fontWeight="bold"
+                                            lineHeight={1.25}
+                                            fontFamily="body"
                                           >
-                                            <Text
-                                              as="span"
-                                              fontSize="sm"
-                                              fontWeight="semibold"
-                                              whiteSpace="nowrap"
-                                              lineHeight={1.3}
-                                              fontFamily="body"
-                                            >
-                                              {pill}
-                                            </Text>
-                                          </Box>
+                                            {pill}
+                                          </Text>
                                         </Box>
-                                        <Tooltip label="Delete device" placement="top">
-                                          <IconButton
-                                            aria-label="Delete device"
-                                            flexShrink={0}
-                                            size="sm"
-                                            variant="ghost"
-                                            color="red.500"
-                                            _hover={{ bg: "blackAlpha.100" }}
-                                            _dark={{ _hover: { bg: "whiteAlpha.200" } }}
-                                            isLoading={deletingDeviceId === device.device_id}
-                                            onClick={() => {
-                                              if (!editingUser) return;
-                                              setDeletingDeviceId(device.device_id);
-                                              removeUserDevice(editingUser, device.device_id)
-                                                .catch((err) => {
-                                                  setError(err?.response?._data?.detail || "Failed to delete device");
-                                                })
-                                                .finally(() => setDeletingDeviceId(null));
-                                            }}
-                                          >
-                                            <TrashIcon width={22} height={22} />
-                                          </IconButton>
-                                        </Tooltip>
-                                      </HStack>
-                                      <Box
-                                        w="100%"
-                                        overflowX="auto"
-                                        sx={{
-                                          scrollbarWidth: "thin",
-                                          "&::-webkit-scrollbar": { height: "5px" },
-                                          "&::-webkit-scrollbar-thumb": {
-                                            borderRadius: "full",
-                                            bg: "blackAlpha.400",
-                                          },
-                                        }}
-                                      >
-                                        <Text
-                                          fontSize="sm"
-                                          fontFamily="mono"
-                                          whiteSpace="nowrap"
-                                          lineHeight={1.45}
-                                          color="#000000"
-                                          _dark={{ color: "gray.50" }}
-                                        >
-                                          <Text as="span" fontWeight="semibold" fontFamily="body">
-                                            HWID:{" "}
-                                          </Text>
-                                          {device.device_id}
-                                        </Text>
-                                      </Box>
-                                      <Box
-                                        w="100%"
-                                        overflowX="auto"
-                                        sx={{
-                                          scrollbarWidth: "thin",
-                                          "&::-webkit-scrollbar": { height: "5px" },
-                                          "&::-webkit-scrollbar-thumb": {
-                                            borderRadius: "full",
-                                            bg: "blackAlpha.400",
-                                          },
-                                        }}
-                                      >
-                                        <Text
-                                          fontSize="sm"
-                                          whiteSpace="nowrap"
-                                          lineHeight={1.45}
-                                          color="#000000"
-                                          _dark={{ color: "gray.50" }}
-                                        >
-                                          <Text as="span" fontWeight="semibold">
-                                            App:{" "}
-                                          </Text>
-                                          {meta.appName}
-                                        </Text>
                                       </Box>
                                       <Text
                                         fontSize="sm"
+                                        fontFamily="mono"
+                                        lineHeight={1.5}
+                                        color="#1a1a1a"
+                                        _dark={{ color: "gray.100" }}
+                                        wordBreak="break-all"
+                                        overflowWrap="anywhere"
+                                      >
+                                        <Text as="span" fontWeight="semibold" fontFamily="body">
+                                          HWID:{" "}
+                                        </Text>
+                                        {device.device_id}
+                                      </Text>
+                                      <Text
+                                        fontSize="sm"
+                                        lineHeight={1.5}
+                                        color="#1a1a1a"
+                                        _dark={{ color: "gray.100" }}
                                         whiteSpace="nowrap"
-                                        lineHeight={1.45}
-                                        color="#000000"
-                                        _dark={{ color: "gray.50" }}
+                                        overflow="hidden"
+                                        textOverflow="ellipsis"
+                                      >
+                                        <Text as="span" fontWeight="semibold">
+                                          App:{" "}
+                                        </Text>
+                                        {meta.appName}
+                                      </Text>
+                                      <Text
+                                        fontSize="sm"
+                                        lineHeight={1.5}
+                                        color="#1a1a1a"
+                                        _dark={{ color: "gray.100" }}
+                                        whiteSpace="nowrap"
                                       >
                                         <Text as="span" fontWeight="semibold">
                                           Last seen:{" "}
@@ -1167,6 +1132,30 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                         {seen}
                                       </Text>
                                     </VStack>
+                                    <Tooltip label="Delete device" placement="top">
+                                      <IconButton
+                                        aria-label="Delete device"
+                                        flexShrink={0}
+                                        alignSelf="center"
+                                        size="sm"
+                                        variant="ghost"
+                                        color="red.600"
+                                        _hover={{ bg: "blackAlpha.100" }}
+                                        _dark={{ color: "red.400", _hover: { bg: "whiteAlpha.200" } }}
+                                        isLoading={deletingDeviceId === device.device_id}
+                                        onClick={() => {
+                                          if (!editingUser) return;
+                                          setDeletingDeviceId(device.device_id);
+                                          removeUserDevice(editingUser, device.device_id)
+                                            .catch((err) => {
+                                              setError(err?.response?._data?.detail || "Failed to delete device");
+                                            })
+                                            .finally(() => setDeletingDeviceId(null));
+                                        }}
+                                      >
+                                        <TrashIcon width={22} height={22} />
+                                      </IconButton>
+                                    </Tooltip>
                                   </Flex>
                                 </Box>
                               );
