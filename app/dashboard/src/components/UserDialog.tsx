@@ -106,30 +106,112 @@ const DeviceRemoveIcon = chakra(TrashIcon, {
 type DeviceVisualMeta = {
   platform: "iphone" | "android" | "desktop" | "unknown";
   appName: string;
-  deviceName: string;
+  /** Short label for the colored badge, e.g. iOS / Android / macOS */
+  platformBadge: string;
+  /** Second line: specific hardware / OS detail parsed from UA */
+  deviceDetail: string;
   colorScheme: "orange" | "green" | "blue" | "gray";
 };
 
+const IOS_MODEL_MAP: Record<string, string> = {
+  "iPhone17,1": "iPhone 16 Pro",
+  "iPhone17,2": "iPhone 16 Pro Max",
+  "iPhone17,3": "iPhone 16",
+  "iPhone17,4": "iPhone 16 Plus",
+  "iPhone16,1": "iPhone 15 Pro",
+  "iPhone16,2": "iPhone 15 Pro Max",
+  "iPhone16,3": "iPhone 15",
+  "iPhone16,4": "iPhone 15 Plus",
+  "iPhone15,4": "iPhone 14",
+  "iPhone15,5": "iPhone 14 Plus",
+  "iPhone15,2": "iPhone 14 Pro",
+  "iPhone15,3": "iPhone 14 Pro Max",
+  "iPhone14,7": "iPhone 14",
+  "iPhone14,8": "iPhone 14 Plus",
+  "iPhone14,2": "iPhone 13 Pro",
+  "iPhone14,3": "iPhone 13 Pro Max",
+  "iPhone14,4": "iPhone 13 mini",
+  "iPhone14,5": "iPhone 13",
+  "iPhone13,1": "iPhone 12 mini",
+  "iPhone13,2": "iPhone 12",
+  "iPhone13,3": "iPhone 12 Pro",
+  "iPhone13,4": "iPhone 12 Pro Max",
+};
+
+const pickIosVersion = (ua: string): string | null => {
+  const m =
+    ua.match(/iOS\s+([\d.]+)/i) ||
+    ua.match(/iPhone\s+OS\s+([\d_]+)/i) ||
+    ua.match(/CPU\s+OS\s+([\d_]+)/i);
+  if (!m) return null;
+  return m[1].replace(/_/g, ".");
+};
+
+const pickAndroidModel = (ua: string): string | null => {
+  const m = ua.match(/Android\s+[\d.]+;\s*([^)]+)\)/i);
+  if (!m) return null;
+  let s = m[1].trim();
+  s = s.replace(/\s+Build\/.*$/i, "").replace(/;\s*wv\)$/i, "").trim();
+  if (s.length > 80) s = `${s.slice(0, 77)}…`;
+  return s || null;
+};
+
+const pickDesktopDetail = (ua: string): string => {
+  const mac = ua.match(/Mac\s+OS\s+X\s+([\d_]+)/i);
+  if (mac) return `Mac · macOS ${mac[1].replace(/_/g, ".")}`;
+  const win = ua.match(/Windows\s+NT\s+([\d.]+)/i);
+  if (win) {
+    const v = win[1];
+    if (v === "10.0") return "PC · Windows 10/11";
+    return `PC · Windows NT ${v}`;
+  }
+  if (/Linux/i.test(ua)) return "PC · Linux";
+  return "Desktop";
+};
+
 const getDeviceVisualMeta = (userAgent?: string | null): DeviceVisualMeta => {
-  const raw = (userAgent || "").toLowerCase();
+  const ua = userAgent || "";
+  const raw = ua.toLowerCase();
   const appName =
-    userAgent?.split("/")[0]?.trim() ||
-    userAgent?.split(" ")[0]?.trim() ||
+    ua.split("/")[0]?.trim() ||
+    ua.split(/\s+/)[0]?.trim() ||
     "Unknown app";
 
   if (raw.includes("iphone") || raw.includes("ios") || raw.includes("ipad")) {
+    const isPad = raw.includes("ipad");
+    const platformBadge = isPad ? "iPadOS" : "iOS";
+    const hw = ua.match(/\b(iPhone\d+,\d+|iPad\d+,\d+|iPod\d+,\d+)\b/i);
+    const iosVer = pickIosVersion(ua);
+    let deviceDetail: string;
+    if (hw) {
+      const code = hw[1];
+      const friendly = IOS_MODEL_MAP[code] || code.replace(/,/g, ",");
+      deviceDetail = iosVer ? `${friendly} · iOS ${iosVer}` : friendly;
+    } else if (iosVer) {
+      deviceDetail = `${isPad ? "iPad" : "iPhone"} · iOS ${iosVer}`;
+    } else {
+      deviceDetail = isPad ? "iPad" : "iPhone";
+    }
     return {
       platform: "iphone",
       appName,
-      deviceName: "iPhone / iOS",
+      platformBadge,
+      deviceDetail,
       colorScheme: "orange",
     };
   }
   if (raw.includes("android")) {
+    const model = pickAndroidModel(ua);
+    const ver = ua.match(/Android\s+([\d.]+)/i)?.[1];
+    const deviceDetail =
+      model && ver
+        ? `${model} · Android ${ver}`
+        : model || (ver ? `Android ${ver}` : "Android device");
     return {
       platform: "android",
       appName,
-      deviceName: "Android",
+      platformBadge: "Android",
+      deviceDetail,
       colorScheme: "green",
     };
   }
@@ -142,14 +224,16 @@ const getDeviceVisualMeta = (userAgent?: string | null): DeviceVisualMeta => {
     return {
       platform: "desktop",
       appName,
-      deviceName: "Desktop",
+      platformBadge: raw.includes("macintosh") ? "macOS" : raw.includes("windows") ? "Windows" : "Linux",
+      deviceDetail: pickDesktopDetail(ua),
       colorScheme: "blue",
     };
   }
   return {
     platform: "unknown",
     appName,
-    deviceName: "Unknown device",
+    platformBadge: "Unknown",
+    deviceDetail: ua.length > 120 ? `${ua.slice(0, 117)}…` : ua || "Unknown device",
     colorScheme: "gray",
   };
 };
@@ -917,84 +1001,114 @@ export const UserDialog: FC<UserDialogProps> = () => {
                       <Box
                         borderWidth="1px"
                         borderRadius="10px"
-                        p={2}
+                        p={{ base: 2, md: 2 }}
                         maxH="340px"
                         overflowY="auto"
                         minW={0}
                       >
                         {!!editingUser?.hwid_devices?.length ? (
-                          <VStack align="stretch" gap={2}>
-                            <HStack px={2} pb={1} color="gray.500" fontSize="xs" fontWeight="semibold" align="flex-start" gap={2} minW={0}>
-                              <Box flex="1" minW={0}>App / Device</Box>
-                              <VStack align="flex-start" spacing={0} flex="1" minW={0} fontWeight="semibold">
-                                <Text lineHeight="1.2">Last seen</Text>
-                                <Text lineHeight="1.2" fontWeight="medium" color="gray.400">
-                                  HWID
-                                </Text>
-                              </VStack>
-                              <Box w="32px" flexShrink={0} />
-                            </HStack>
+                          <VStack align="stretch" gap={{ base: 2, md: 2 }}>
                             {editingUser.hwid_devices.map((device) => {
                               const meta = getDeviceVisualMeta(device.user_agent);
+                              const labelProps = {
+                                fontSize: "2xs" as const,
+                                color: "gray.500",
+                                fontWeight: "semibold" as const,
+                                textTransform: "uppercase" as const,
+                                letterSpacing: "0.04em",
+                                mb: 0.5,
+                              };
+                              const valueLineProps = {
+                                minW: 0,
+                                w: "100%",
+                                wordBreak: "break-word" as const,
+                                overflowWrap: "anywhere" as const,
+                              };
                               return (
                                 <Box
                                   key={device.device_id}
                                   borderWidth="1px"
-                                  borderRadius="8px"
-                                  p={2}
+                                  borderRadius="md"
+                                  p={{ base: 3, md: 3 }}
                                   minW={0}
+                                  bg="blackAlpha.20"
+                                  _dark={{ bg: "whiteAlpha.50" }}
                                 >
-                                  <HStack align="start" gap={2} minW={0}>
-                                    <HStack align="center" gap={2} flex="1" minW={0}>
-                                      <Box flexShrink={0}>
-                                        <Icon color={`${meta.colorScheme}.400`}>
-                                          {getDeviceIcon(meta.platform)}
-                                        </Icon>
-                                      </Box>
-                                      <Box minW={0}>
-                                        <Text fontSize="sm" fontWeight="semibold" lineHeight={1.2} noOfLines={2}>
+                                  <Flex align="flex-start" gap={{ base: 2, md: 3 }} minW={0}>
+                                    <Box flexShrink={0} pt={0.5}>
+                                      <Icon color={`${meta.colorScheme}.400`}>
+                                        {getDeviceIcon(meta.platform)}
+                                      </Icon>
+                                    </Box>
+                                    <VStack align="stretch" spacing={2} flex="1" minW={0}>
+                                      <Box {...valueLineProps}>
+                                        <Text {...labelProps}>App</Text>
+                                        <Tooltip label={meta.appName} placement="top" openDelay={400}>
+                                          <Text
+                                            fontSize="sm"
+                                            fontWeight="semibold"
+                                            lineHeight={1.25}
+                                            noOfLines={1}
+                                            whiteSpace="nowrap"
+                                            overflow="hidden"
+                                            textOverflow="ellipsis"
+                                          >
                                             {meta.appName}
-                                        </Text>
+                                          </Text>
+                                        </Tooltip>
+                                      </Box>
+                                      <Box {...valueLineProps}>
+                                        <Text {...labelProps}>Platform</Text>
                                         <Box
-                                          mt={1}
+                                          display="inline-block"
                                           px={2}
                                           py={0.5}
-                                          borderRadius="6px"
+                                          borderRadius="md"
                                           bg={`${meta.colorScheme}.500`}
                                           color="white"
                                           fontSize="xs"
                                           fontWeight="medium"
-                                          w="fit-content"
                                         >
-                                          {meta.deviceName}
+                                          {meta.platformBadge}
                                         </Box>
                                       </Box>
-                                    </HStack>
-                                    <VStack align="stretch" spacing={1} flex="1" minW={0}>
-                                      <Text fontSize="xs" opacity={0.85} whiteSpace="nowrap">
-                                        {dayjs(device.last_seen_at).format("YYYY-MM-DD HH:mm")}
-                                      </Text>
-                                      <Tooltip label={device.device_id} placement="top" openDelay={300}>
-                                        <Box minW={0}>
+                                      <Box {...valueLineProps}>
+                                        <Text {...labelProps}>Device</Text>
+                                        <Tooltip label={meta.deviceDetail} placement="top" openDelay={400}>
+                                          <Text fontSize="xs" opacity={0.95} noOfLines={3}>
+                                            {meta.deviceDetail}
+                                          </Text>
+                                        </Tooltip>
+                                      </Box>
+                                      <Box {...valueLineProps}>
+                                        <Text {...labelProps}>Last seen</Text>
+                                        <Text fontSize="xs" opacity={0.9} whiteSpace="nowrap">
+                                          {dayjs(device.last_seen_at).format("YYYY-MM-DD HH:mm")}
+                                        </Text>
+                                      </Box>
+                                      <Box {...valueLineProps}>
+                                        <Text {...labelProps}>HWID</Text>
+                                        <Tooltip label={device.device_id} placement="top" openDelay={300}>
                                           <Text
                                             fontSize="xs"
-                                            opacity={0.75}
+                                            opacity={0.85}
                                             fontFamily="mono"
-                                            noOfLines={1}
-                                            isTruncated
+                                            noOfLines={2}
+                                            sx={{ lineBreak: "anywhere" }}
                                           >
                                             {device.device_id}
                                           </Text>
-                                        </Box>
-                                      </Tooltip>
+                                        </Tooltip>
+                                      </Box>
                                     </VStack>
                                     <Tooltip label="Delete device" placement="top">
                                       <IconButton
                                         aria-label="Delete device"
-                                        size="xs"
+                                        size="sm"
                                         colorScheme="red"
                                         variant="ghost"
                                         flexShrink={0}
+                                        alignSelf="flex-start"
                                         isLoading={deletingDeviceId === device.device_id}
                                         onClick={() => {
                                           if (!editingUser) return;
@@ -1009,7 +1123,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                         <DeviceRemoveIcon />
                                       </IconButton>
                                     </Tooltip>
-                                  </HStack>
+                                  </Flex>
                                 </Box>
                               );
                             })}
