@@ -30,6 +30,7 @@ COPY . /code
 
 RUN ln -s /code/marzban-cli.py /usr/bin/marzban-cli \
     && chmod +x /usr/bin/marzban-cli \
+    && python3 -m pip install --no-cache-dir --upgrade setuptools \
     && marzban-cli completion install --shell bash
 
 CMD ["bash", "-c", "alembic upgrade head; python main.py"]
