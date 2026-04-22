@@ -490,10 +490,10 @@ export const UserDialog: FC<UserDialogProps> = () => {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size={{ base: "full", md: "4xl" }}>
+    <Modal isOpen={isOpen} onClose={onClose} size="2xl">
       <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
       <FormProvider {...form}>
-        <ModalContent mx={{ base: 0, md: 3 }} my={{ base: 0, md: "auto" }}>
+        <ModalContent mx="3">
           <form onSubmit={form.handleSubmit(submit)}>
             <ModalHeader pt={6}>
               <HStack gap={2}>
@@ -924,10 +924,14 @@ export const UserDialog: FC<UserDialogProps> = () => {
                       >
                         {!!editingUser?.hwid_devices?.length ? (
                           <VStack align="stretch" gap={2}>
-                            <HStack px={2} pb={1} color="gray.500" fontSize="xs" fontWeight="semibold" align="flex-end" gap={2} minW={0}>
-                              <Box minW="140px" maxW="40%" flexShrink={0}>App / Device</Box>
-                              <Box flex="1" minW={0}>HWID</Box>
-                              <Box minW="118px" flexShrink={0} textAlign="right">Last seen</Box>
+                            <HStack px={2} pb={1} color="gray.500" fontSize="xs" fontWeight="semibold" align="flex-start" gap={2} minW={0}>
+                              <Box flex="1" minW={0}>App / Device</Box>
+                              <VStack align="flex-start" spacing={0} flex="1" minW={0} fontWeight="semibold">
+                                <Text lineHeight="1.2">Last seen</Text>
+                                <Text lineHeight="1.2" fontWeight="medium" color="gray.400">
+                                  HWID
+                                </Text>
+                              </VStack>
                               <Box w="32px" flexShrink={0} />
                             </HStack>
                             {editingUser.hwid_devices.map((device) => {
@@ -941,8 +945,8 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                   minW={0}
                                 >
                                   <HStack align="start" gap={2} minW={0}>
-                                    <HStack align="center" gap={2} minW="140px" maxW="40%" flexShrink={0}>
-                                      <Icon color={`${meta.colorScheme}.400`}>
+                                    <HStack align="center" gap={2} flex="1" minW={0}>
+                                      <Icon flexShrink={0} color={`${meta.colorScheme}.400`}>
                                         {getDeviceIcon(meta.platform)}
                                       </Icon>
                                       <Box minW={0}>
@@ -964,24 +968,24 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                         </Box>
                                       </Box>
                                     </HStack>
-                                    <Box flex="1" minW={0} pt={1}>
-                                      <Tooltip label={device.device_id} placement="top" openDelay={400}>
-                                        <Text
-                                          fontSize="xs"
-                                          opacity={0.75}
-                                          fontFamily="mono"
-                                          noOfLines={2}
-                                          whiteSpace="normal"
-                                          wordBreak="break-word"
-                                          overflowWrap="break-word"
-                                        >
-                                          {device.device_id}
-                                        </Text>
+                                    <VStack align="stretch" spacing={1} flex="1" minW={0}>
+                                      <Text fontSize="xs" opacity={0.85} whiteSpace="nowrap">
+                                        {dayjs(device.last_seen_at).format("YYYY-MM-DD HH:mm")}
+                                      </Text>
+                                      <Tooltip label={device.device_id} placement="top" openDelay={300}>
+                                        <Box minW={0}>
+                                          <Text
+                                            fontSize="xs"
+                                            opacity={0.75}
+                                            fontFamily="mono"
+                                            noOfLines={1}
+                                            isTruncated
+                                          >
+                                            {device.device_id}
+                                          </Text>
+                                        </Box>
                                       </Tooltip>
-                                    </Box>
-                                    <Text fontSize="xs" opacity={0.75} minW="118px" flexShrink={0} textAlign="right" pt={1} whiteSpace="nowrap">
-                                      {dayjs(device.last_seen_at).format("YYYY-MM-DD HH:mm")}
-                                    </Text>
+                                    </VStack>
                                     <Tooltip label="Delete device" placement="top">
                                       <IconButton
                                         aria-label="Delete device"
