@@ -1036,14 +1036,13 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                     bg: "gray.700",
                                     borderColor: "gray.600",
                                   }}
-                                  sx={{ aspectRatio: "21 / 9" }}
                                 >
                                   <Tooltip label="Delete device" placement="left">
                                     <IconButton
                                       aria-label="Delete device"
                                       position="absolute"
-                                      top={1}
-                                      right={1}
+                                      top={0.5}
+                                      right={0.5}
                                       zIndex={1}
                                       size="xs"
                                       colorScheme="red"
@@ -1063,25 +1062,24 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                     </IconButton>
                                   </Tooltip>
                                   <Flex
-                                    align="center"
-                                    gap={{ base: 2, md: 3 }}
-                                    h="100%"
-                                    minH={0}
+                                    align="flex-start"
+                                    gap={{ base: 2, md: 2.5 }}
                                     minW={0}
-                                    p={{ base: 2, md: 2.5 }}
-                                    pr={{ base: 10, md: 11 }}
+                                    py={1}
+                                    px={2}
+                                    pr={{ base: 9, md: 10 }}
                                   >
-                                    <Box flexShrink={0} alignSelf="center" transform="scale(0.9)">
+                                    <Box flexShrink={0} pt={0.5} transform="scale(0.88)">
                                       <Icon color={`${meta.colorScheme}.400`}>
                                         {getDeviceIcon(meta.platform)}
                                       </Icon>
                                     </Box>
-                                    <VStack align="flex-start" spacing={1} flex="1" minW={0} justify="center">
+                                    <VStack align="flex-start" spacing={0.5} flex="1" minW={0}>
                                       <Tooltip label={pill} placement="top" openDelay={200}>
                                         <Box
                                           maxW="100%"
-                                          px={2.5}
-                                          py={0.5}
+                                          px={2}
+                                          py={0.25}
                                           borderRadius="full"
                                           bg={`${meta.colorScheme}.400`}
                                           color="gray.900"
