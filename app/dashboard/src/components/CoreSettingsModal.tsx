@@ -38,6 +38,7 @@ import { useTranslation } from "react-i18next";
 import { useMutation } from "react-query";
 import { ReadyState } from "react-use-websocket";
 import { useWebSocket } from "react-use-websocket/dist/lib/use-websocket";
+import { BASE_API_URL } from "service/http";
 import { getAuthToken } from "utils/authStorage";
 import { Icon } from "./Icon";
 import { JsonEditor } from "./JsonEditor";
@@ -84,10 +85,10 @@ const getStatus = (status: string) => {
 
 const getWebsocketUrl = (nodeID: string) => {
   try {
-    let baseURL = new URL(
-      import.meta.env.VITE_BASE_API.startsWith("/")
-        ? window.location.origin + import.meta.env.VITE_BASE_API
-        : import.meta.env.VITE_BASE_API
+    const baseURL = new URL(
+      BASE_API_URL.startsWith("/")
+        ? window.location.origin + BASE_API_URL
+        : BASE_API_URL
     );
 
     return (
