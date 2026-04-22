@@ -222,7 +222,7 @@ const getDeviceVisualMeta = (userAgent?: string | null): DeviceVisualMeta => {
   };
 };
 
-const DEVICE_CARD_OUTLINE_PX = 40;
+const DEVICE_CARD_OUTLINE_PX = 30;
 
 /** Black outline icons like the reference mockup (not the colored dashboard Icon tile). */
 const DeviceCardOutlineIcon = ({
@@ -1031,13 +1031,13 @@ export const UserDialog: FC<UserDialogProps> = () => {
                       <Box
                         borderWidth="1px"
                         borderRadius="10px"
-                        p={{ base: 3, md: 3 }}
-                        maxH="380px"
+                        p={{ base: 2, md: 2 }}
+                        maxH="360px"
                         overflowY="auto"
                         minW={0}
                       >
                         {!!editingUser?.hwid_devices?.length ? (
-                          <VStack align="stretch" gap={{ base: 3, md: 3 }}>
+                          <VStack align="stretch" gap={{ base: 2, md: 2 }}>
                             {editingUser.hwid_devices.map((device) => {
                               const meta = getDeviceVisualMeta(device.user_agent);
                               const seen = dayjs(device.last_seen_at).format("DD.MM.YYYY");
@@ -1050,7 +1050,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                   maxW="100%"
                                   minW={0}
                                   borderWidth="1px"
-                                  borderRadius="lg"
+                                  borderRadius="md"
                                   overflow="hidden"
                                   bg="#ECECEC"
                                   borderColor="#5C5C5C"
@@ -1061,30 +1061,30 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                 >
                                   <Flex
                                     align="center"
-                                    gap={{ base: 4, md: 5 }}
+                                    gap={{ base: 2.5, md: 3 }}
                                     minW={0}
-                                    py={{ base: 4, md: 5 }}
-                                    px={{ base: 4, md: 5 }}
+                                    py={{ base: 2.5, md: 3 }}
+                                    px={{ base: 2.5, md: 3 }}
                                   >
                                     <Box flexShrink={0} color="#1a1a1a" _dark={{ color: "gray.100" }} lineHeight={0}>
                                       <DeviceCardOutlineIcon platform={meta.platform} />
                                     </Box>
-                                    <VStack align="stretch" spacing={3} flex="1" minW={0}>
+                                    <VStack align="stretch" spacing={2} flex="1" minW={0}>
                                       <Box alignSelf="flex-start" maxW="100%">
                                         <Box
                                           as="span"
                                           display="inline-block"
-                                          px={4}
-                                          py={1.5}
-                                          borderRadius="full"
+                                          px={2.5}
+                                          py={0.5}
+                                          borderRadius="md"
                                           bg={pillColors.bg}
                                           color={pillColors.fg}
                                         >
                                           <Text
                                             as="span"
-                                            fontSize="sm"
+                                            fontSize="xs"
                                             fontWeight="bold"
-                                            lineHeight={1.25}
+                                            lineHeight={1.2}
                                             fontFamily="body"
                                           >
                                             {pill}
@@ -1092,9 +1092,9 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                         </Box>
                                       </Box>
                                       <Text
-                                        fontSize="sm"
+                                        fontSize="11px"
                                         fontFamily="mono"
-                                        lineHeight={1.5}
+                                        lineHeight={1.4}
                                         color="#1a1a1a"
                                         _dark={{ color: "gray.100" }}
                                         wordBreak="break-all"
@@ -1106,8 +1106,8 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                         {device.device_id}
                                       </Text>
                                       <Text
-                                        fontSize="sm"
-                                        lineHeight={1.5}
+                                        fontSize="11px"
+                                        lineHeight={1.4}
                                         color="#1a1a1a"
                                         _dark={{ color: "gray.100" }}
                                         whiteSpace="nowrap"
@@ -1120,8 +1120,8 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                         {meta.appName}
                                       </Text>
                                       <Text
-                                        fontSize="sm"
-                                        lineHeight={1.5}
+                                        fontSize="11px"
+                                        lineHeight={1.4}
                                         color="#1a1a1a"
                                         _dark={{ color: "gray.100" }}
                                         whiteSpace="nowrap"
@@ -1137,7 +1137,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                         aria-label="Delete device"
                                         flexShrink={0}
                                         alignSelf="center"
-                                        size="sm"
+                                        size="xs"
                                         variant="ghost"
                                         color="red.600"
                                         _hover={{ bg: "blackAlpha.100" }}
@@ -1153,7 +1153,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                             .finally(() => setDeletingDeviceId(null));
                                         }}
                                       >
-                                        <TrashIcon width={22} height={22} />
+                                        <TrashIcon width={18} height={18} />
                                       </IconButton>
                                     </Tooltip>
                                   </Flex>
