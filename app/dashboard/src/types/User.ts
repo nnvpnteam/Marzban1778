@@ -50,6 +50,7 @@ export type User = {
   data_limit_reset_strategy: DataLimitResetStrategy;
   on_hold_expire_duration: number | null;
   hwid_device_limit: number | null;
+  effective_hwid_device_limit?: number | null;
   node_data_limits?: Record<string, number>;
   hwid_devices?: UserHWIDDevice[];
   lifetime_used_traffic: number;

@@ -678,6 +678,21 @@ def update_user_sub(db: Session, dbuser: User, user_agent: str) -> User:
 def register_user_hwid(
         db: Session, dbuser: User, device_id: str, user_agent: str = None
 ) -> UserHWIDDevice:
+    effective_limit = dbuser.hwid_device_limit
+    if effective_limit is None:
+        effective_limit = DEFAULT_HWID_DEVICE_LIMIT
+
+    if effective_limit and len(dbuser.hwid_devices) > effective_limit:
+        allowed_device_ids = {
+            d.device_id
+            for d in sorted(
+                dbuser.hwid_devices,
+                key=lambda d: (d.created_at or datetime.utcnow(), d.id or 0),
+            )[:effective_limit]
+        }
+        if device_id not in allowed_device_ids:
+            raise ValueError("HWID device limit reached")
+
     device = (
         db.query(UserHWIDDevice)
         .filter(
@@ -692,10 +707,6 @@ def register_user_hwid(
         db.commit()
         db.refresh(device)
         return device
-
-    effective_limit = dbuser.hwid_device_limit
-    if effective_limit is None:
-        effective_limit = DEFAULT_HWID_DEVICE_LIMIT
 
     if effective_limit and len(dbuser.hwid_devices) >= effective_limit:
         raise ValueError("HWID device limit reached")
@@ -1603,15 +1614,12 @@ def delete_notification_reminder(db: Session, dbreminder: NotificationReminder) 
     return
 
 
-def count_online_users(db: Session, hours: int = 1, admin: Admin = None):
-    active_since = datetime.utcnow() - timedelta(hours=hours)
-    query = (
-        db.query(func.count(func.distinct(NodeUserUsage.user_id)))
-        .join(User, User.id == NodeUserUsage.user_id)
-        .filter(
-            NodeUserUsage.created_at >= active_since,
-            NodeUserUsage.used_traffic > 0,
-        )
+def count_online_users(db: Session, minutes: int = 2, admin: Admin = None):
+    active_since = datetime.utcnow() - timedelta(minutes=minutes)
+    query = db.query(func.count(User.id)).filter(
+        User.online_at.isnot(None),
+        User.online_at >= active_since,
+        User.status.in_([UserStatus.active, UserStatus.on_hold]),
     )
     if admin:
         query = query.filter(User.admin == admin)

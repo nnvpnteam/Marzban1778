@@ -18,6 +18,7 @@ from app.models.user import (
     UserUsagesResponse,
 )
 from app.utils import report, responses
+from config import DEFAULT_HWID_DEVICE_LIMIT
 
 router = APIRouter(tags=["User"], prefix="/api", responses={401: responses._401})
 
@@ -221,6 +222,33 @@ def remove_user_hwid_device(
     bg.add_task(report.user_subscription_revoked, user=user, user_admin=dbuser.admin, by=admin)
     logger.info(
         f'Removed HWID device "{device_id}" and revoked subscription for user "{dbuser.username}"'
+    )
+    return user
+
+
+@router.post("/user/{username}/hwid/decrease", response_model=UserResponse, responses={403: responses._403, 404: responses._404})
+def decrease_user_hwid_limit(
+    bg: BackgroundTasks,
+    step: int = Query(1, ge=1),
+    db: Session = Depends(get_db),
+    dbuser: UserResponse = Depends(get_validated_user),
+    admin: Admin = Depends(Admin.get_current),
+):
+    """Decrease user's HWID limit by step."""
+    current_limit = (
+        dbuser.hwid_device_limit
+        if dbuser.hwid_device_limit is not None
+        else DEFAULT_HWID_DEVICE_LIMIT
+    )
+    dbuser.hwid_device_limit = max(0, current_limit - step)
+    db.commit()
+    db.refresh(dbuser)
+    user = UserResponse.model_validate(dbuser)
+    if dbuser.status in [UserStatus.active, UserStatus.on_hold]:
+        bg.add_task(xray.operations.update_user, dbuser=dbuser)
+    bg.add_task(report.user_updated, user=user, user_admin=dbuser.admin, by=admin)
+    logger.info(
+        f'Decreased HWID limit for user "{dbuser.username}" to {dbuser.hwid_device_limit}'
     )
     return user
 

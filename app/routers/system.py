@@ -41,7 +41,7 @@ def get_system_stats(
         db, status=UserStatus.limited, admin=dbadmin if not admin.is_sudo else None
     )
     online_users = crud.count_online_users(
-        db, 1, admin=dbadmin if not admin.is_sudo else None
+        db, 2, admin=dbadmin if not admin.is_sudo else None
     )
     realtime_bandwidth_stats = realtime_bandwidth()
 

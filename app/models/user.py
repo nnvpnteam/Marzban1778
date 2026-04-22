@@ -11,7 +11,11 @@ from app.models.admin import Admin
 from app.models.proxy import ProxySettings, ProxyTypes
 from app.subscription.share import generate_v2ray_links
 from app.utils.jwt import create_subscription_token
-from config import XRAY_SUBSCRIPTION_PATH, XRAY_SUBSCRIPTION_URL_PREFIX
+from config import (
+    DEFAULT_HWID_DEVICE_LIMIT,
+    XRAY_SUBSCRIPTION_PATH,
+    XRAY_SUBSCRIPTION_URL_PREFIX,
+)
 
 USERNAME_REGEXP = re.compile(r"^(?=\w{3,32}\b)[a-zA-Z0-9-_@.]+(?:_[a-zA-Z0-9-_@.]+)*$")
 
@@ -352,6 +356,7 @@ class UserResponse(User):
 
     admin: Optional[Admin] = None
     hwid_devices: List[UserHWIDDeviceModel] = []
+    effective_hwid_device_limit: Optional[int] = None
     model_config = ConfigDict(from_attributes=True)
 
     @model_validator(mode="after")
@@ -369,6 +374,14 @@ class UserResponse(User):
             url_prefix = (XRAY_SUBSCRIPTION_URL_PREFIX).replace('*', salt)
             token = create_subscription_token(self.username)
             self.subscription_url = f"{url_prefix}/{XRAY_SUBSCRIPTION_PATH}/{token}"
+        return self
+
+    @model_validator(mode="after")
+    def validate_effective_hwid_limit(self):
+        if self.hwid_device_limit is None:
+            self.effective_hwid_device_limit = DEFAULT_HWID_DEVICE_LIMIT
+        else:
+            self.effective_hwid_device_limit = self.hwid_device_limit
         return self
 
     @field_validator("proxies", mode="before")

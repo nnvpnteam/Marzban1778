@@ -639,6 +639,11 @@ type ActionButtonsProps = {
 const ActionButtons: FC<ActionButtonsProps> = ({ user }) => {
   const { setQRCode, setSubLink } = useDashboard();
   const deviceCount = user.hwid_devices?.length || 0;
+  const effectiveLimit = user.effective_hwid_device_limit;
+  const limitLabel =
+    effectiveLimit === 0 || effectiveLimit === null || effectiveLimit === undefined
+      ? "∞"
+      : String(effectiveLimit);
 
   const proxyLinks = user.links.join("\r\n");
 
@@ -664,7 +669,7 @@ const ActionButtons: FC<ActionButtonsProps> = ({ user }) => {
         minW="70px"
         textAlign="right"
       >
-        Devices: {deviceCount}
+        Devices: {deviceCount}/{limitLabel}
       </Text>
       <CopyToClipboard
         text={

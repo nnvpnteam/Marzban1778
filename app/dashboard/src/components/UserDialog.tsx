@@ -895,12 +895,24 @@ export const UserDialog: FC<UserDialogProps> = () => {
                   </FormControl>
                   {isEditing && (
                     <FormControl mt={4}>
+                      {(() => {
+                        const registeredCount = editingUser?.hwid_devices?.length || 0;
+                        const effectiveLimit = editingUser?.effective_hwid_device_limit;
+                        const limitLabel =
+                          effectiveLimit === 0 ||
+                          effectiveLimit === null ||
+                          effectiveLimit === undefined
+                            ? "∞"
+                            : String(effectiveLimit);
+                        return (
                       <HStack justifyContent="space-between" mb={2}>
                         <FormLabel m={0}>Connected Devices</FormLabel>
                         <Text fontSize="sm" color="gray.500">
-                          {editingUser?.hwid_devices?.length || 0} registered
+                          {registeredCount}/{limitLabel}
                         </Text>
                       </HStack>
+                        );
+                      })()}
                       <Box
                         borderWidth="1px"
                         borderRadius="10px"
@@ -910,6 +922,12 @@ export const UserDialog: FC<UserDialogProps> = () => {
                       >
                         {!!editingUser?.hwid_devices?.length ? (
                           <VStack align="stretch" gap={2}>
+                            <HStack px={2} pb={1} color="gray.500" fontSize="xs" fontWeight="semibold">
+                              <Box minW="150px">App / Device</Box>
+                              <Box flex="1">HWID</Box>
+                              <Box minW="130px" textAlign="right">Last seen</Box>
+                              <Box minW="28px" />
+                            </HStack>
                             {editingUser.hwid_devices.map((device) => {
                               const meta = getDeviceVisualMeta(device.user_agent);
                               return (
@@ -919,36 +937,36 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                   borderRadius="8px"
                                   p={2}
                                 >
-                                  <HStack justifyContent="space-between" align="start">
-                                    <HStack align="start" gap={2}>
+                                  <HStack justifyContent="space-between" align="start" gap={2}>
+                                    <HStack align="center" gap={2} minW="150px">
                                       <Icon color={`${meta.colorScheme}.400`}>
                                         {getDeviceIcon(meta.platform)}
                                       </Icon>
                                       <Box>
-                                        <HStack gap={2} flexWrap="wrap">
-                                          <Text fontSize="sm" fontWeight="semibold">
+                                        <Text fontSize="sm" fontWeight="semibold" lineHeight={1.2}>
                                             {meta.appName}
-                                          </Text>
-                                          <Box
-                                            px={2}
-                                            py={0.5}
-                                            borderRadius="6px"
-                                            bg={`${meta.colorScheme}.500`}
-                                            color="white"
-                                            fontSize="xs"
-                                            fontWeight="medium"
-                                          >
-                                            {meta.deviceName}
-                                          </Box>
-                                        </HStack>
-                                        <Text fontSize="xs" opacity={0.75}>
-                                          HWID: {device.device_id}
                                         </Text>
-                                        <Text fontSize="xs" opacity={0.75}>
-                                          Last seen: {dayjs(device.last_seen_at).format("YYYY-MM-DD HH:mm")}
-                                        </Text>
+                                        <Box
+                                          mt={1}
+                                          px={2}
+                                          py={0.5}
+                                          borderRadius="6px"
+                                          bg={`${meta.colorScheme}.500`}
+                                          color="white"
+                                          fontSize="xs"
+                                          fontWeight="medium"
+                                          w="fit-content"
+                                        >
+                                          {meta.deviceName}
+                                        </Box>
                                       </Box>
                                     </HStack>
+                                    <Text fontSize="xs" opacity={0.75} flex="1" pt={1} wordBreak="break-all">
+                                      {device.device_id}
+                                    </Text>
+                                    <Text fontSize="xs" opacity={0.75} minW="130px" textAlign="right" pt={1}>
+                                      {dayjs(device.last_seen_at).format("YYYY-MM-DD HH:mm")}
+                                    </Text>
                                     <Tooltip label="Delete device" placement="top">
                                       <IconButton
                                         aria-label="Delete device"
