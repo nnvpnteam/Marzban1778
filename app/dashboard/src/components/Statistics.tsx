@@ -2,6 +2,8 @@ import { Box, BoxProps, Card, chakra, HStack, Text } from "@chakra-ui/react";
 import {
   ChartBarIcon,
   ChartPieIcon,
+  SignalIcon,
+  UserGroupIcon,
   UsersIcon,
 } from "@heroicons/react/24/outline";
 import { useDashboard } from "contexts/DashboardContext";
@@ -12,6 +14,24 @@ import { fetch } from "service/http";
 import { formatBytes, numberWithCommas } from "utils/formatByte";
 
 const TotalUsersIcon = chakra(UsersIcon, {
+  baseStyle: {
+    w: 5,
+    h: 5,
+    position: "relative",
+    zIndex: "2",
+  },
+});
+
+const RegisteredUsersIcon = chakra(UserGroupIcon, {
+  baseStyle: {
+    w: 5,
+    h: 5,
+    position: "relative",
+    zIndex: "2",
+  },
+});
+
+const OnlineUsersIcon = chakra(SignalIcon, {
   baseStyle: {
     w: 5,
     h: 5,
@@ -140,24 +160,18 @@ export const Statistics: FC<BoxProps> = (props) => {
       {...props}
     >
       <StatisticCard
-        title={t("activeUsers")}
+        title={t("totalUsers")}
         content={
           systemData && (
-            <HStack alignItems="flex-end">
-              <Text>{numberWithCommas(systemData.users_active)}</Text>
-              <Text
-                fontWeight="normal"
-                fontSize="lg"
-                as="span"
-                display="inline-block"
-                pb="5px"
-              >
-                / {numberWithCommas(systemData.total_user)}
-              </Text>
-            </HStack>
+            <Text>{numberWithCommas(systemData.total_user)}</Text>
           )
         }
-        icon={<TotalUsersIcon />}
+        icon={<RegisteredUsersIcon />}
+      />
+      <StatisticCard
+        title={t("activeNow")}
+        content={systemData && <Text>{numberWithCommas(systemData.online_users)}</Text>}
+        icon={<OnlineUsersIcon />}
       />
       <StatisticCard
         title={t("dataUsage")}

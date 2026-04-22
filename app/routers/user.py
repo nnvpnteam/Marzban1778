@@ -199,6 +199,29 @@ def revoke_user_subscription(
     return user
 
 
+@router.delete("/user/{username}/hwid/{device_id}", response_model=UserResponse, responses={403: responses._403, 404: responses._404})
+def remove_user_hwid_device(
+    bg: BackgroundTasks,
+    device_id: str,
+    db: Session = Depends(get_db),
+    dbuser: UserResponse = Depends(get_validated_user),
+    admin: Admin = Depends(Admin.get_current),
+):
+    """Remove a registered HWID device from user."""
+    removed = crud.remove_user_hwid_device(db=db, dbuser=dbuser, device_id=device_id)
+    if not removed:
+        raise HTTPException(status_code=404, detail="Device not found")
+
+    db.refresh(dbuser)
+    user = UserResponse.model_validate(dbuser)
+
+    if dbuser.status in [UserStatus.active, UserStatus.on_hold]:
+        bg.add_task(xray.operations.update_user, dbuser=dbuser)
+    bg.add_task(report.user_updated, user=user, user_admin=dbuser.admin, by=admin)
+    logger.info(f'Removed HWID device "{device_id}" from user "{dbuser.username}"')
+    return user
+
+
 @router.get("/users", response_model=UsersResponse, responses={400: responses._400, 403: responses._403, 404: responses._404})
 def get_users(
     offset: int = None,

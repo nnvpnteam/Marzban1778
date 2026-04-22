@@ -1,6 +1,7 @@
 {
   "active": "active",
   "activeUsers": "Пользователи",
+  "activeNow": "Активны сейчас",
   "apply": "Применить",
   "cancel": "Отмена",
   "core.configuration": "Конфигурация",
@@ -181,6 +182,7 @@
   "userDialog.weeks": "Недели",
   "username": "Имя пользователя",
   "users": "Пользователи",
+  "totalUsers": "Всего пользователей",
   "usersTable.copied": "Скопировано",
   "usersTable.copyConfigs": "Скопировать конфигурации",
   "usersTable.copyLink": "Скопировать ссылку на подписку",

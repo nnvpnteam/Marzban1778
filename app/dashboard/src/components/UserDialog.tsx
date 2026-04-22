@@ -33,7 +33,11 @@ import {
 } from "@chakra-ui/react";
 import {
   ChartPieIcon,
+  ComputerDesktopIcon,
+  DevicePhoneMobileIcon,
   PencilIcon,
+  QuestionMarkCircleIcon,
+  TrashIcon,
   UserPlusIcon,
 } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -82,6 +86,79 @@ const UserUsageIcon = chakra(ChartPieIcon, {
     h: 5,
   },
 });
+
+const DevicePhoneIcon = chakra(DevicePhoneMobileIcon, {
+  baseStyle: { w: 4, h: 4 },
+});
+
+const DeviceDesktopIcon = chakra(ComputerDesktopIcon, {
+  baseStyle: { w: 4, h: 4 },
+});
+
+const DeviceUnknownIcon = chakra(QuestionMarkCircleIcon, {
+  baseStyle: { w: 4, h: 4 },
+});
+
+const DeviceRemoveIcon = chakra(TrashIcon, {
+  baseStyle: { w: 4, h: 4 },
+});
+
+type DeviceVisualMeta = {
+  platform: "iphone" | "android" | "desktop" | "unknown";
+  appName: string;
+  deviceName: string;
+  colorScheme: "orange" | "green" | "blue" | "gray";
+};
+
+const getDeviceVisualMeta = (userAgent?: string | null): DeviceVisualMeta => {
+  const raw = (userAgent || "").toLowerCase();
+  const appName =
+    userAgent?.split("/")[0]?.trim() ||
+    userAgent?.split(" ")[0]?.trim() ||
+    "Unknown app";
+
+  if (raw.includes("iphone") || raw.includes("ios") || raw.includes("ipad")) {
+    return {
+      platform: "iphone",
+      appName,
+      deviceName: "iPhone / iOS",
+      colorScheme: "orange",
+    };
+  }
+  if (raw.includes("android")) {
+    return {
+      platform: "android",
+      appName,
+      deviceName: "Android",
+      colorScheme: "green",
+    };
+  }
+  if (
+    raw.includes("windows") ||
+    raw.includes("macintosh") ||
+    raw.includes("linux") ||
+    raw.includes("x11")
+  ) {
+    return {
+      platform: "desktop",
+      appName,
+      deviceName: "Desktop",
+      colorScheme: "blue",
+    };
+  }
+  return {
+    platform: "unknown",
+    appName,
+    deviceName: "Unknown device",
+    colorScheme: "gray",
+  };
+};
+
+const getDeviceIcon = (platform: DeviceVisualMeta["platform"]) => {
+  if (platform === "desktop") return <DeviceDesktopIcon />;
+  if (platform === "iphone" || platform === "android") return <DevicePhoneIcon />;
+  return <DeviceUnknownIcon />;
+};
 
 export type UserDialogProps = {};
 
@@ -254,6 +331,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
     onEditingUser,
     createUser,
     onDeletingUser,
+    removeUserDevice,
   } = useDashboard();
   const isEditing = !!editingUser;
   const isOpen = isCreatingNewUser || isEditing;
@@ -264,6 +342,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
   const { colorMode } = useColorMode();
 
   const [usageVisible, setUsageVisible] = useState(false);
+  const [deletingDeviceId, setDeletingDeviceId] = useState<string | null>(null);
   const handleUsageToggle = () => {
     setUsageVisible((current) => !current);
   };
@@ -758,38 +837,6 @@ export const UserDialog: FC<UserDialogProps> = () => {
                           {form.formState.errors?.note?.message}
                         </FormErrorMessage>
                       </FormControl>
-                      {isEditing && !!editingUser?.hwid_devices?.length && (
-                        <FormControl mb={"10px"}>
-                          <FormLabel>Registered devices</FormLabel>
-                          <VStack
-                            align="stretch"
-                            gap={2}
-                            maxH="180px"
-                            overflowY="auto"
-                          >
-                            {editingUser.hwid_devices.map((device) => (
-                              <Box
-                                key={device.device_id}
-                                borderWidth="1px"
-                                borderRadius="8px"
-                                p={2}
-                              >
-                                <Text fontSize="sm" fontWeight="medium">
-                                  {device.device_id}
-                                </Text>
-                                {device.user_agent && (
-                                  <Text fontSize="xs" opacity={0.75}>
-                                    {device.user_agent}
-                                  </Text>
-                                )}
-                                <Text fontSize="xs" opacity={0.75}>
-                                  Last seen: {dayjs(device.last_seen_at).format("YYYY-MM-DD HH:mm")}
-                                </Text>
-                              </Box>
-                            ))}
-                          </VStack>
-                        </FormControl>
-                      )}
                     </Flex>
                     {error && (
                       <Alert
@@ -846,6 +893,95 @@ export const UserDialog: FC<UserDialogProps> = () => {
                       )}
                     </FormErrorMessage>
                   </FormControl>
+                  {isEditing && (
+                    <FormControl mt={4}>
+                      <HStack justifyContent="space-between" mb={2}>
+                        <FormLabel m={0}>Connected Devices</FormLabel>
+                        <Text fontSize="sm" color="gray.500">
+                          {editingUser?.hwid_devices?.length || 0} registered
+                        </Text>
+                      </HStack>
+                      <Box
+                        borderWidth="1px"
+                        borderRadius="10px"
+                        p={2}
+                        maxH="340px"
+                        overflowY="auto"
+                      >
+                        {!!editingUser?.hwid_devices?.length ? (
+                          <VStack align="stretch" gap={2}>
+                            {editingUser.hwid_devices.map((device) => {
+                              const meta = getDeviceVisualMeta(device.user_agent);
+                              return (
+                                <Box
+                                  key={device.device_id}
+                                  borderWidth="1px"
+                                  borderRadius="8px"
+                                  p={2}
+                                >
+                                  <HStack justifyContent="space-between" align="start">
+                                    <HStack align="start" gap={2}>
+                                      <Icon color={`${meta.colorScheme}.400`}>
+                                        {getDeviceIcon(meta.platform)}
+                                      </Icon>
+                                      <Box>
+                                        <HStack gap={2} flexWrap="wrap">
+                                          <Text fontSize="sm" fontWeight="semibold">
+                                            {meta.appName}
+                                          </Text>
+                                          <Box
+                                            px={2}
+                                            py={0.5}
+                                            borderRadius="6px"
+                                            bg={`${meta.colorScheme}.500`}
+                                            color="white"
+                                            fontSize="xs"
+                                            fontWeight="medium"
+                                          >
+                                            {meta.deviceName}
+                                          </Box>
+                                        </HStack>
+                                        <Text fontSize="xs" opacity={0.75}>
+                                          HWID: {device.device_id}
+                                        </Text>
+                                        <Text fontSize="xs" opacity={0.75}>
+                                          Last seen: {dayjs(device.last_seen_at).format("YYYY-MM-DD HH:mm")}
+                                        </Text>
+                                      </Box>
+                                    </HStack>
+                                    <Tooltip label="Delete device" placement="top">
+                                      <IconButton
+                                        aria-label="Delete device"
+                                        size="xs"
+                                        colorScheme="red"
+                                        variant="ghost"
+                                        isLoading={deletingDeviceId === device.device_id}
+                                        onClick={() => {
+                                          if (!editingUser) return;
+                                          setDeletingDeviceId(device.device_id);
+                                          removeUserDevice(editingUser, device.device_id)
+                                            .catch((err) => {
+                                              setError(err?.response?._data?.detail || "Failed to delete device");
+                                            })
+                                            .finally(() => setDeletingDeviceId(null));
+                                        }}
+                                      >
+                                        <DeviceRemoveIcon />
+                                      </IconButton>
+                                    </Tooltip>
+                                  </HStack>
+                                </Box>
+                              );
+                            })}
+                          </VStack>
+                        ) : (
+                          <Text fontSize="sm" color="gray.500" p={2}>
+                            No registered devices yet
+                          </Text>
+                        )}
+                      </Box>
+                    </FormControl>
+                  )}
                 </GridItem>
                 {isEditing && usageVisible && (
                   <GridItem pt={6} colSpan={{ base: 1, md: 2 }}>

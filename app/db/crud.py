@@ -712,6 +712,22 @@ def register_user_hwid(
     return device
 
 
+def remove_user_hwid_device(db: Session, dbuser: User, device_id: str) -> bool:
+    device = (
+        db.query(UserHWIDDevice)
+        .filter(
+            UserHWIDDevice.user_id == dbuser.id,
+            UserHWIDDevice.device_id == device_id,
+        )
+        .first()
+    )
+    if not device:
+        return False
+    db.delete(device)
+    db.commit()
+    return True
+
+
 def get_user_node_limit_exceeded_ids(
         db: Session, node_id: int, user_ids: List[int]
 ) -> List[int]:

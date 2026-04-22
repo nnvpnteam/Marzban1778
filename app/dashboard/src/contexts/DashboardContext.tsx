@@ -68,6 +68,7 @@ type DashboardStateType = {
   onShowingNodesUsage: (isShowingNodesUsage: boolean) => void;
   resetDataUsage: (user: User) => Promise<void>;
   revokeSubscription: (user: User) => Promise<void>;
+  removeUserDevice: (user: User, deviceId: string) => Promise<void>;
 };
 
 const fetchUsers = (query: FilterType): Promise<User[]> => {
@@ -207,6 +208,15 @@ export const useDashboard = create(
         method: "POST",
       }).then((user) => {
         set({ revokeSubscriptionUser: null, editingUser: user });
+        get().refetchUsers();
+      });
+    },
+    removeUserDevice: (user, deviceId) => {
+      const encodedDeviceId = encodeURIComponent(deviceId);
+      return fetch(`/user/${user.username}/hwid/${encodedDeviceId}`, {
+        method: "DELETE",
+      }).then((updatedUser) => {
+        set({ editingUser: updatedUser });
         get().refetchUsers();
       });
     },

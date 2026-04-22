@@ -1,6 +1,7 @@
 {
   "active": "active",
   "activeUsers": "active users",
+  "activeNow": "active now",
   "apply": "Apply",
   "cancel": "Cancel",
   "core.configuration": "Configuration",
@@ -181,6 +182,7 @@
   "userDialog.weeks": "Weeks",
   "username": "Username",
   "users": "Users",
+  "totalUsers": "total users",
   "usersTable.copied": "Copied",
   "usersTable.copyConfigs": "Copy Configs",
   "usersTable.copyLink": "Copy Subscription Link",
