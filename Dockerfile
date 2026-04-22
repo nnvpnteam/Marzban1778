@@ -15,6 +15,16 @@ COPY ./requirements.txt /code/
 RUN python3 -m pip install --upgrade pip "setuptools<81" \
     && pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
+FROM node:20-alpine AS dashboard-build
+
+WORKDIR /dashboard
+
+COPY app/dashboard/package*.json /dashboard/
+RUN npm ci
+
+COPY app/dashboard /dashboard
+RUN npm run build
+
 FROM python:$PYTHON_VERSION-slim
 
 ENV PYTHON_LIB_PATH=/usr/local/lib/python${PYTHON_VERSION%.*}/site-packages
@@ -27,6 +37,7 @@ COPY --from=build /usr/local/bin /usr/local/bin
 COPY --from=build /usr/local/share/xray /usr/local/share/xray
 
 COPY . /code
+COPY --from=dashboard-build /dashboard/build /code/app/dashboard/build
 
 RUN ln -s /code/marzban-cli.py /usr/bin/marzban-cli \
     && chmod +x /usr/bin/marzban-cli \
