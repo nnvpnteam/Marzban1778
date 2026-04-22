@@ -1073,7 +1073,9 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                       <Box alignSelf="flex-start" maxW="100%">
                                         <Box
                                           as="span"
-                                          display="inline-block"
+                                          display="inline-flex"
+                                          alignItems="center"
+                                          justifyContent="center"
                                           px={2.5}
                                           py={0.5}
                                           borderRadius="md"
@@ -1083,7 +1085,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                           <Text
                                             as="span"
                                             fontSize="xs"
-                                            fontWeight="bold"
+                                            fontWeight="normal"
                                             lineHeight={1.2}
                                             fontFamily="body"
                                           >
