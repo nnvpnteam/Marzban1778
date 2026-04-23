@@ -66,7 +66,7 @@ def upgrade() -> None:
     if _has_column(bind, "system", "trial_metered_node_ids"):
         op.execute(
             sa.text(
-                "UPDATE system SET trial_metered_node_ids = CAST('[]' AS JSON) "
+                "UPDATE `system` SET trial_metered_node_ids = CAST('[]' AS JSON) "
                 "WHERE trial_metered_node_ids IS NULL"
             )
         )
@@ -79,7 +79,7 @@ def upgrade() -> None:
     if _has_column(bind, "system", "paid_metered_node_ids"):
         op.execute(
             sa.text(
-                "UPDATE system SET paid_metered_node_ids = CAST('[]' AS JSON) "
+                "UPDATE `system` SET paid_metered_node_ids = CAST('[]' AS JSON) "
                 "WHERE paid_metered_node_ids IS NULL"
             )
         )
