@@ -106,23 +106,31 @@ const UsageSliderCompact: FC<UsageSliderProps> = (props) => {
   const isUnlimited = total === 0 || total === null;
   return (
     <VStack align="stretch" spacing={0}>
-      <Text
+      <HStack
+        w="full"
+        justify="space-between"
+        align="baseline"
+        spacing={3}
         fontSize="xs"
         fontWeight="medium"
         color="gray.600"
         _dark={{ color: "gray.400" }}
-        noOfLines={1}
+        gap={2}
       >
-        {formatBytes(used)} /{" "}
-        {isUnlimited ? (
-          <Text as="span" fontFamily="system-ui">
-            ∞
-          </Text>
-        ) : (
-          formatBytes(total)
-        )}{" "}
-        · {formatBytes(allNodesLifetimeTraffic)}
-      </Text>
+        <Text as="span" noOfLines={1} minW={0} flex="1" textAlign="left">
+          {formatBytes(used)} /{" "}
+          {isUnlimited ? (
+            <Text as="span" fontFamily="system-ui">
+              ∞
+            </Text>
+          ) : (
+            formatBytes(total)
+          )}
+        </Text>
+        <Text as="span" flexShrink={0} textAlign="right">
+          {formatBytes(allNodesLifetimeTraffic)}
+        </Text>
+      </HStack>
       <Text fontSize="xxs" color="gray.500" _dark={{ color: "gray.500" }}>
         ↑ {formatBps(liveUplinkBps)} · ↓ {formatBps(liveDownlinkBps)}
       </Text>
@@ -169,15 +177,24 @@ const UsageSlider: FC<UsageSliderProps> = (props) => {
           <SliderFilledTrack borderRadius="full" />
         </SliderTrack>
       </Slider>
-      <Text
+      <HStack
+        w="full"
+        justify="space-between"
+        align="baseline"
+        spacing={3}
         fontSize="xs"
         fontWeight="medium"
         color="gray.600"
         _dark={{ color: "gray.400" }}
-        noOfLines={2}
+        gap={2}
       >
-        {formatBytes(used)} / {limitPart} · {formatBytes(allNodesLifetimeTraffic)}
-      </Text>
+        <Text as="span" noOfLines={2} minW={0} flex="1" textAlign="left">
+          {formatBytes(used)} / {limitPart}
+        </Text>
+        <Text as="span" flexShrink={0} textAlign="right" noOfLines={1}>
+          {formatBytes(allNodesLifetimeTraffic)}
+        </Text>
+      </HStack>
       <Text fontSize="xs" color="gray.500" _dark={{ color: "gray.500" }}>
         ↑ {formatBps(liveUplinkBps)} · ↓ {formatBps(liveDownlinkBps)}
       </Text>
@@ -686,15 +703,15 @@ const SubscriptionTrialLabel: FC<{ user: User }> = ({ user }) => {
       px={2}
       py={0.5}
       borderRadius="md"
-      bg={trial ? "yellow.400" : "green.500"}
+      bg={trial ? "orange.500" : "green.500"}
       color="white"
       borderWidth="1px"
-      borderColor={trial ? "yellow.500" : "green.600"}
+      borderColor={trial ? "orange.600" : "green.600"}
       flexShrink={0}
       _dark={{
-        bg: trial ? "yellow.300" : "green.500",
+        bg: trial ? "orange.500" : "green.500",
         color: "white",
-        borderColor: trial ? "yellow.400" : "green.400",
+        borderColor: trial ? "orange.400" : "green.400",
       }}
     >
       {trial ? t("usersTable.trialBadge") : t("usersTable.paidBadge")}

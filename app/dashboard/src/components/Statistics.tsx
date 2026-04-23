@@ -163,14 +163,26 @@ export const Statistics: FC<BoxProps> = (props) => {
         title={t("totalUsers")}
         content={
           systemData && (
-            <HStack spacing={1} alignItems="baseline">
-              <Text as="span">
+            <HStack spacing={1} alignItems="baseline" display="inline-flex">
+              <Text as="span" fontWeight="semibold">
                 {numberWithCommas(systemData.users_active)}
               </Text>
-              <Text as="span" fontWeight="normal" opacity={0.65}>
+              <Text
+                as="span"
+                fontWeight="normal"
+                color="gray.500"
+                _dark={{ color: "gray.400" }}
+              >
                 /
               </Text>
-              <Text as="span">{numberWithCommas(systemData.total_user)}</Text>
+              <Text
+                as="span"
+                fontWeight="normal"
+                color="gray.500"
+                _dark={{ color: "gray.400" }}
+              >
+                {numberWithCommas(systemData.total_user)}
+              </Text>
             </HStack>
           )
         }
