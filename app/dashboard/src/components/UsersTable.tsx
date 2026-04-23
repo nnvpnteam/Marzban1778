@@ -99,44 +99,32 @@ const UsageSliderCompact: FC<UsageSliderProps> = (props) => {
   const {
     used,
     total,
-    totalUsedTraffic,
     allNodesLifetimeTraffic,
     liveUplinkBps = 0,
     liveDownlinkBps = 0,
   } = props;
   const isUnlimited = total === 0 || total === null;
-  const { t } = useTranslation();
   return (
     <VStack align="stretch" spacing={0}>
-      <HStack
-        justifyContent="space-between"
+      <Text
         fontSize="xs"
         fontWeight="medium"
         color="gray.600"
-        _dark={{
-          color: "gray.400",
-        }}
+        _dark={{ color: "gray.400" }}
+        noOfLines={1}
       >
-        <Text>
-          {formatBytes(used)} /{" "}
-          {isUnlimited ? (
-            <Text as="span" fontFamily="system-ui">
-              ∞
-            </Text>
-          ) : (
-            formatBytes(total)
-          )}
-        </Text>
-      </HStack>
+        {formatBytes(used)} /{" "}
+        {isUnlimited ? (
+          <Text as="span" fontFamily="system-ui">
+            ∞
+          </Text>
+        ) : (
+          formatBytes(total)
+        )}{" "}
+        · {formatBytes(allNodesLifetimeTraffic)}
+      </Text>
       <Text fontSize="xxs" color="gray.500" _dark={{ color: "gray.500" }}>
         ↑ {formatBps(liveUplinkBps)} · ↓ {formatBps(liveDownlinkBps)}
-      </Text>
-      <Text fontSize="xxs" color="gray.500" _dark={{ color: "gray.500" }}>
-        {t("usersTable.meteredLifetimeTotal")}: {formatBytes(totalUsedTraffic)}
-      </Text>
-      <Text fontSize="xxs" color="gray.500" _dark={{ color: "gray.500" }}>
-        {t("usersTable.allNodesLifetimeTotal")}:{" "}
-        {formatBytes(allNodesLifetimeTraffic)}
       </Text>
     </VStack>
   );
@@ -146,7 +134,6 @@ const UsageSlider: FC<UsageSliderProps> = (props) => {
     used,
     total,
     dataLimitResetStrategy,
-    totalUsedTraffic,
     allNodesLifetimeTraffic,
     liveUplinkBps = 0,
     liveDownlinkBps = 0,
@@ -155,6 +142,21 @@ const UsageSlider: FC<UsageSliderProps> = (props) => {
   const { t } = useTranslation();
   const isUnlimited = total === 0 || total === null;
   const isReached = !isUnlimited && (used / total) * 100 >= 100;
+  const limitPart = isUnlimited ? (
+    <Text as="span" fontFamily="system-ui">
+      ∞
+    </Text>
+  ) : (
+    <>
+      {formatBytes(total)}
+      {dataLimitResetStrategy && dataLimitResetStrategy !== "no_reset"
+        ? " " +
+          t(
+            "userDialog.resetStrategy" + getResetStrategy(dataLimitResetStrategy)
+          )
+        : ""}
+    </>
+  );
   return (
     <>
       <Slider
@@ -167,43 +169,15 @@ const UsageSlider: FC<UsageSliderProps> = (props) => {
           <SliderFilledTrack borderRadius="full" />
         </SliderTrack>
       </Slider>
-      <HStack
-        justifyContent="space-between"
+      <Text
         fontSize="xs"
         fontWeight="medium"
         color="gray.600"
-        _dark={{
-          color: "gray.400",
-        }}
+        _dark={{ color: "gray.400" }}
+        noOfLines={2}
       >
-        <Text>
-          {formatBytes(used)} /{" "}
-          {isUnlimited ? (
-            <Text as="span" fontFamily="system-ui">
-              ∞
-            </Text>
-          ) : (
-            formatBytes(total) +
-            (dataLimitResetStrategy && dataLimitResetStrategy !== "no_reset"
-              ? " " +
-                t(
-                  "userDialog.resetStrategy" +
-                    getResetStrategy(dataLimitResetStrategy)
-                )
-              : "")
-          )}
-        </Text>
-        <VStack align="flex-end" spacing={0}>
-          <Text>
-            {t("usersTable.meteredLifetimeTotal")}:{" "}
-            {formatBytes(totalUsedTraffic)}
-          </Text>
-          <Text>
-            {t("usersTable.allNodesLifetimeTotal")}:{" "}
-            {formatBytes(allNodesLifetimeTraffic)}
-          </Text>
-        </VStack>
-      </HStack>
+        {formatBytes(used)} / {limitPart} · {formatBytes(allNodesLifetimeTraffic)}
+      </Text>
       <Text fontSize="xs" color="gray.500" _dark={{ color: "gray.500" }}>
         ↑ {formatBps(liveUplinkBps)} · ↓ {formatBps(liveDownlinkBps)}
       </Text>

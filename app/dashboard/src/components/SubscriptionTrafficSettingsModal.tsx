@@ -1,6 +1,6 @@
 import {
+  Box,
   Button,
-  Divider,
   FormControl,
   FormLabel,
   HStack,
@@ -12,13 +12,19 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
+  SimpleGrid,
   Tab,
   TabList,
   TabPanel,
   TabPanels,
   Tabs,
+  Tag,
+  TagCloseButton,
+  TagLabel,
   Text,
   VStack,
+  Wrap,
+  WrapItem,
   useToast,
 } from "@chakra-ui/react";
 import { fetch } from "service/http";
@@ -34,6 +40,8 @@ type SettingsPayload = {
   paid_metered_node_ids: MeterList;
 };
 
+type Row = { id: number | null; name: string };
+
 const coreKey = "__core__" as const;
 
 const toKey = (id: number | null) => (id === null ? coreKey : String(id));
@@ -46,6 +54,152 @@ const listToSet = (list: MeterList): Set<string> =>
 
 const setToList = (s: Set<string>): MeterList =>
   Array.from(s).map((k) => fromKey(k));
+
+type PoolEditorProps = {
+  tab: "trial" | "paid";
+  rows: Row[];
+  trial: Set<string>;
+  paid: Set<string>;
+  setTrial: (s: Set<string>) => void;
+  setPaid: (s: Set<string>) => void;
+  t: (k: string) => string;
+};
+
+const PoolEditor: FC<PoolEditorProps> = ({
+  tab,
+  rows,
+  trial,
+  paid,
+  setTrial,
+  setPaid,
+  t,
+}) => {
+  const set = tab === "trial" ? trial : paid;
+  const apply = (next: Set<string>) =>
+    tab === "trial" ? setTrial(next) : setPaid(next);
+
+  const inPool = rows.filter((r) => set.has(toKey(r.id)));
+  const available = rows.filter((r) => !set.has(toKey(r.id)));
+
+  const add = (id: number | null) => {
+    const next = new Set(set);
+    next.add(toKey(id));
+    apply(next);
+  };
+
+  const remove = (id: number | null) => {
+    const next = new Set(set);
+    next.delete(toKey(id));
+    apply(next);
+  };
+
+  return (
+    <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3} alignItems="stretch">
+      <Box
+        borderWidth="1px"
+        borderRadius="md"
+        borderColor="light-border"
+        p={3}
+        bg="gray.50"
+        _dark={{ bg: "gray.800", borderColor: "gray.600" }}
+      >
+        <Text
+          fontSize="xs"
+          fontWeight="semibold"
+          color="gray.700"
+          _dark={{ color: "gray.200" }}
+          mb={2}
+        >
+          {t("subscriptionTraffic.inPool")}
+        </Text>
+        <Wrap spacing={2}>
+          {inPool.map((row) => (
+            <WrapItem key={toKey(row.id)}>
+              <Tag
+                size="md"
+                borderRadius="full"
+                variant="subtle"
+                colorScheme="blue"
+                maxW="100%"
+              >
+                <TagLabel isTruncated>
+                  {row.name}
+                  {row.id != null ? ` #${row.id}` : ""}
+                </TagLabel>
+                <TagCloseButton
+                  aria-label="remove"
+                  onClick={() => remove(row.id)}
+                />
+              </Tag>
+            </WrapItem>
+          ))}
+        </Wrap>
+        {inPool.length === 0 && (
+          <Text fontSize="xs" color="gray.500" _dark={{ color: "gray.500" }}>
+            —
+          </Text>
+        )}
+      </Box>
+      <Box
+        borderWidth="1px"
+        borderRadius="md"
+        borderColor="light-border"
+        bg="white"
+        _dark={{ bg: "gray.900", borderColor: "gray.600" }}
+        maxH={{ base: "42vh", md: "38vh" }}
+        display="flex"
+        flexDirection="column"
+        overflow="hidden"
+      >
+        <Text
+          fontSize="xs"
+          fontWeight="semibold"
+          color="gray.700"
+          _dark={{ color: "gray.200" }}
+          px={3}
+          pt={3}
+          pb={2}
+          flexShrink={0}
+        >
+          {t("subscriptionTraffic.addToPool")}
+        </Text>
+        <VStack align="stretch" spacing={0} overflowY="auto" flex="1" minH={0}>
+          {available.map((row, idx) => (
+            <HStack
+              key={toKey(row.id)}
+              justify="space-between"
+              px={3}
+              py={2.5}
+              flexShrink={0}
+              gap={2}
+              borderBottomWidth={
+                idx < available.length - 1 ? "1px" : undefined
+              }
+              borderColor="gray.100"
+              _dark={{ borderColor: "gray.700" }}
+            >
+              <Text fontSize="sm" noOfLines={1} flex={1} minW={0}>
+                {row.name}
+                {row.id != null ? ` (#${row.id})` : ""}
+              </Text>
+              <Button
+                size="xs"
+                variant="solid"
+                colorScheme="primary"
+                flexShrink={0}
+                minW="32px"
+                px={2}
+                onClick={() => add(row.id)}
+              >
+                +
+              </Button>
+            </HStack>
+          ))}
+        </VStack>
+      </Box>
+    </SimpleGrid>
+  );
+};
 
 type Props = {
   isOpen: boolean;
@@ -73,7 +227,7 @@ export const SubscriptionTrafficSettingsModal: FC<Props> = ({
     [t]
   );
 
-  const rows = useMemo(() => {
+  const rows: Row[] = useMemo(() => {
     const remote = (nodes || [])
       .filter((n) => n.id != null)
       .map((n) => ({ id: n.id as number, name: n.name }));
@@ -100,16 +254,6 @@ export const SubscriptionTrafficSettingsModal: FC<Props> = ({
   useEffect(() => {
     if (isOpen) void load();
   }, [isOpen, load]);
-
-  const toggle = (tab: "trial" | "paid", id: number | null) => {
-    const k = toKey(id);
-    const mut = tab === "trial" ? trial : paid;
-    const next = new Set(mut);
-    if (next.has(k)) next.delete(k);
-    else next.add(k);
-    if (tab === "trial") setTrial(next);
-    else setPaid(next);
-  };
 
   const save = async () => {
     setSaving(true);
@@ -183,38 +327,16 @@ export const SubscriptionTrafficSettingsModal: FC<Props> = ({
     }
   };
 
-  const renderPanel = (tab: "trial" | "paid") => (
-    <VStack align="stretch" spacing={2} maxH="40vh" overflowY="auto" pr={1}>
-      {rows.map((row) => {
-        const set = tab === "trial" ? trial : paid;
-        const active = set.has(toKey(row.id));
-        return (
-          <Button
-            key={toKey(row.id)}
-            size="sm"
-            variant={active ? "solid" : "outline"}
-            colorScheme={active ? "blue" : "gray"}
-            justifyContent="flex-start"
-            onClick={() => toggle(tab, row.id)}
-          >
-            {row.name}
-            {row.id != null ? ` (#${row.id})` : ""}
-          </Button>
-        );
-      })}
-    </VStack>
-  );
-
   const bulkGroupLabel =
     tabIndex === 0
       ? t("subscriptionTraffic.tabTrial")
       : t("subscriptionTraffic.tabPaid");
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="xl">
+    <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
       <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>{t("subscriptionTraffic.title")}</ModalHeader>
+      <ModalContent mx={3}>
+        <ModalHeader pr={10}>{t("subscriptionTraffic.title")}</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           <Text
@@ -235,72 +357,103 @@ export const SubscriptionTrafficSettingsModal: FC<Props> = ({
               <Tab>{t("subscriptionTraffic.tabPaid")}</Tab>
             </TabList>
             <TabPanels>
-              <TabPanel px={0}>
+              <TabPanel px={0} pt={3}>
                 {loading ? (
                   <Text fontSize="sm">{t("subscriptionTraffic.loading")}</Text>
                 ) : (
-                  renderPanel("trial")
+                  <PoolEditor
+                    tab="trial"
+                    rows={rows}
+                    trial={trial}
+                    paid={paid}
+                    setTrial={setTrial}
+                    setPaid={setPaid}
+                    t={t}
+                  />
                 )}
               </TabPanel>
-              <TabPanel px={0}>
+              <TabPanel px={0} pt={3}>
                 {loading ? (
                   <Text fontSize="sm">{t("subscriptionTraffic.loading")}</Text>
                 ) : (
-                  renderPanel("paid")
+                  <PoolEditor
+                    tab="paid"
+                    rows={rows}
+                    trial={trial}
+                    paid={paid}
+                    setTrial={setTrial}
+                    setPaid={setPaid}
+                    t={t}
+                  />
                 )}
               </TabPanel>
             </TabPanels>
           </Tabs>
 
-          <Divider my={4} />
-
-          <Text fontSize="sm" fontWeight="semibold" mb={1}>
-            {t("subscriptionTraffic.bulkTitle")}
-          </Text>
-          <Text fontSize="xs" color="gray.600" _dark={{ color: "gray.400" }} mb={3}>
-            {t("subscriptionTraffic.bulkScopeHint", { group: bulkGroupLabel })}
-          </Text>
-          <Text fontSize="xs" color="gray.500" _dark={{ color: "gray.500" }} mb={3}>
-            {t("subscriptionTraffic.bulkFieldHint")}
-          </Text>
-          <HStack align="flex-end" spacing={4} flexWrap="wrap">
-            <FormControl maxW="160px">
-              <FormLabel fontSize="xs" mb={1}>
-                {t("subscriptionTraffic.bulkDays")}
-              </FormLabel>
-              <Input
-                size="md"
-                type="number"
-                value={bulkDays}
-                onChange={(e) => setBulkDays(e.target.value)}
-                placeholder="±7"
-              />
-            </FormControl>
-            <FormControl maxW="160px">
-              <FormLabel fontSize="xs" mb={1}>
-                {t("subscriptionTraffic.bulkGb")}
-              </FormLabel>
-              <Input
-                size="md"
-                type="number"
-                step="0.1"
-                value={bulkGb}
-                onChange={(e) => setBulkGb(e.target.value)}
-                placeholder="±10"
-              />
-            </FormControl>
-            <Button
-              colorScheme="orange"
-              size="md"
-              isLoading={bulkSaving}
-              onClick={() => void applyBulk()}
+          <Box
+            mt={5}
+            borderWidth="1px"
+            borderRadius="md"
+            borderColor="light-border"
+            p={4}
+            bg="gray.50"
+            _dark={{ bg: "gray.800", borderColor: "gray.600" }}
+          >
+            <Text fontSize="sm" fontWeight="semibold" mb={1}>
+              {t("subscriptionTraffic.bulkTitle")}
+            </Text>
+            <Text
+              fontSize="xs"
+              color="gray.600"
+              _dark={{ color: "gray.400" }}
+              mb={3}
             >
-              {t("subscriptionTraffic.bulkApply")}
-            </Button>
-          </HStack>
+              {t("subscriptionTraffic.bulkScopeShort", { group: bulkGroupLabel })}
+            </Text>
+            <HStack align="flex-end" spacing={3} flexWrap="wrap">
+              <FormControl maxW="140px">
+                <FormLabel fontSize="xs" mb={1} fontWeight="medium">
+                  {t("subscriptionTraffic.bulkDays")}
+                </FormLabel>
+                <Input
+                  size="md"
+                  type="number"
+                  bg="white"
+                  _dark={{ bg: "gray.900" }}
+                  value={bulkDays}
+                  onChange={(e) => setBulkDays(e.target.value)}
+                  placeholder="±7"
+                />
+              </FormControl>
+              <FormControl maxW="140px">
+                <FormLabel fontSize="xs" mb={1} fontWeight="medium">
+                  {t("subscriptionTraffic.bulkGb")}
+                </FormLabel>
+                <Input
+                  size="md"
+                  type="number"
+                  step="0.1"
+                  bg="white"
+                  _dark={{ bg: "gray.900" }}
+                  value={bulkGb}
+                  onChange={(e) => setBulkGb(e.target.value)}
+                  placeholder="±10"
+                />
+              </FormControl>
+              <Button
+                colorScheme="primary"
+                variant="outline"
+                size="md"
+                isLoading={bulkSaving}
+                onClick={() => void applyBulk()}
+              >
+                {t("subscriptionTraffic.bulkApply")}
+              </Button>
+            </HStack>
+          </Box>
         </ModalBody>
-        <ModalFooter>
-          <HStack>
+        <ModalFooter borderTopWidth="1px" borderColor="light-border" _dark={{ borderColor: "gray.600" }}>
+          <HStack w="full" justify="flex-end" spacing={2}>
             <Button variant="ghost" onClick={onClose}>
               {t("cancel")}
             </Button>

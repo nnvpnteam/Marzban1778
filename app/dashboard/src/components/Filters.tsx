@@ -119,24 +119,22 @@ export const Filters: FC<FilterProps> = ({ ...props }) => {
               flexShrink={0}
               size="md"
               variant="outline"
-              bg="white"
-              color="gray.800"
-              borderColor="gray.300"
-              fontWeight="semibold"
+              borderColor="light-border"
+              color="gray.600"
+              fontWeight="medium"
               px={3}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 setPoolSettingsOpen(true);
               }}
-              _hover={{ bg: "gray.50" }}
-              _active={{ bg: "gray.100" }}
+              _hover={{ bg: "blackAlpha.50" }}
+              _active={{ bg: "blackAlpha.100" }}
               _dark={{
-                bg: "white",
-                color: "gray.800",
-                borderColor: "gray.200",
-                _hover: { bg: "gray.100" },
-                _active: { bg: "gray.200" },
+                color: "gray.300",
+                borderColor: "gray.600",
+                _hover: { bg: "whiteAlpha.100" },
+                _active: { bg: "whiteAlpha.200" },
               }}
             >
               {t("filters.trafficGroupsButton")}
