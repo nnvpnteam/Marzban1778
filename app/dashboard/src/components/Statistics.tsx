@@ -163,7 +163,15 @@ export const Statistics: FC<BoxProps> = (props) => {
         title={t("totalUsers")}
         content={
           systemData && (
-            <Text>{numberWithCommas(systemData.total_user)}</Text>
+            <HStack spacing={1} alignItems="baseline">
+              <Text as="span">
+                {numberWithCommas(systemData.users_active)}
+              </Text>
+              <Text as="span" fontWeight="normal" opacity={0.65}>
+                /
+              </Text>
+              <Text as="span">{numberWithCommas(systemData.total_user)}</Text>
+            </HStack>
           )
         }
         icon={<RegisteredUsersIcon />}

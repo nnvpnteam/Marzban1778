@@ -182,7 +182,7 @@
   "userDialog.weeks": "Недели",
   "username": "Имя пользователя",
   "users": "Пользователи",
-  "totalUsers": "Всего пользователей",
+  "totalUsers": "Пользователи (активные / всего)",
   "usersTable.copied": "Скопировано",
   "usersTable.copyConfigs": "Скопировать конфигурации",
   "usersTable.copyLink": "Скопировать ссылку на подписку",
