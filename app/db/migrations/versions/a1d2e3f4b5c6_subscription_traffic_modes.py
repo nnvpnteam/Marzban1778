@@ -7,6 +7,8 @@ Create Date: 2026-04-23 18:00:00.000000
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import inspect
+from sqlalchemy.exc import NoSuchTableError
 
 
 revision = "a1d2e3f4b5c6"
@@ -15,42 +17,72 @@ branch_labels = None
 depends_on = None
 
 
+def _has_column(bind, table_name: str, column_name: str) -> bool:
+    try:
+        cols = inspect(bind).get_columns(table_name)
+    except NoSuchTableError:
+        return False
+    return any(c["name"] == column_name for c in cols)
+
+
 def upgrade() -> None:
-    op.add_column(
-        "users",
-        sa.Column("is_trial", sa.Boolean(), nullable=False, server_default="0"),
-    )
-    op.add_column(
-        "users",
-        sa.Column("sub_live_uplink_bps", sa.Integer(), nullable=False, server_default="0"),
-    )
-    op.add_column(
-        "users",
-        sa.Column("sub_live_downlink_bps", sa.Integer(), nullable=False, server_default="0"),
-    )
-    op.add_column(
-        "system",
-        sa.Column(
-            "trial_metered_node_ids",
-            sa.JSON(),
-            nullable=False,
-            server_default=sa.text("'[]'"),
-        ),
-    )
-    op.add_column(
-        "system",
-        sa.Column(
-            "paid_metered_node_ids",
-            sa.JSON(),
-            nullable=False,
-            server_default=sa.text("'[]'"),
-        ),
-    )
+    bind = op.get_bind()
+    if not _has_column(bind, "users", "is_trial"):
+        op.add_column(
+            "users",
+            sa.Column("is_trial", sa.Boolean(), nullable=False, server_default="0"),
+        )
+    if not _has_column(bind, "users", "sub_live_uplink_bps"):
+        op.add_column(
+            "users",
+            sa.Column(
+                "sub_live_uplink_bps",
+                sa.Integer(),
+                nullable=False,
+                server_default="0",
+            ),
+        )
+    if not _has_column(bind, "users", "sub_live_downlink_bps"):
+        op.add_column(
+            "users",
+            sa.Column(
+                "sub_live_downlink_bps",
+                sa.Integer(),
+                nullable=False,
+                server_default="0",
+            ),
+        )
+    if not _has_column(bind, "system", "trial_metered_node_ids"):
+        op.add_column(
+            "system",
+            sa.Column(
+                "trial_metered_node_ids",
+                sa.JSON(),
+                nullable=False,
+                server_default=sa.text("'[]'"),
+            ),
+        )
+    if not _has_column(bind, "system", "paid_metered_node_ids"):
+        op.add_column(
+            "system",
+            sa.Column(
+                "paid_metered_node_ids",
+                sa.JSON(),
+                nullable=False,
+                server_default=sa.text("'[]'"),
+            ),
+        )
 
 
 def downgrade() -> None:
-    op.drop_column("system", "paid_metered_node_ids")
-    op.drop_column("system", "trial_metered_node_ids")
-    op.drop_column("users", "sub_live_downlink_bps")
-    op.drop_column("users", "sub_live_uplink_bps")
-    op.drop_column("users", "is_trial")
+    bind = op.get_bind()
+    if _has_column(bind, "system", "paid_metered_node_ids"):
+        op.drop_column("system", "paid_metered_node_ids")
+    if _has_column(bind, "system", "trial_metered_node_ids"):
+        op.drop_column("system", "trial_metered_node_ids")
+    if _has_column(bind, "users", "sub_live_downlink_bps"):
+        op.drop_column("users", "sub_live_downlink_bps")
+    if _has_column(bind, "users", "sub_live_uplink_bps"):
+        op.drop_column("users", "sub_live_uplink_bps")
+    if _has_column(bind, "users", "is_trial"):
+        op.drop_column("users", "is_trial")
