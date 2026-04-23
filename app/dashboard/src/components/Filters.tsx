@@ -11,11 +11,9 @@ import {
   InputLeftElement,
   InputRightElement,
   Spinner,
-  Tooltip,
 } from "@chakra-ui/react";
 import {
   ArrowPathIcon,
-  Cog6ToothIcon,
   MagnifyingGlassIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
@@ -37,10 +35,6 @@ const iconProps = {
 const SearchIcon = chakra(MagnifyingGlassIcon, iconProps);
 const ClearIcon = chakra(XMarkIcon, iconProps);
 export const ReloadIcon = chakra(ArrowPathIcon, iconProps);
-const PoolSettingsIcon = chakra(Cog6ToothIcon, {
-  baseStyle: { w: 4, h: 4 },
-});
-
 export type FilterProps = {} & BoxProps;
 const setSearchField = debounce((search: string) => {
   useDashboard.getState().onFilterChange({
@@ -93,33 +87,66 @@ export const Filters: FC<FilterProps> = ({ ...props }) => {
       {...props}
     >
       <GridItem colSpan={{ base: 1, md: 2, lg: 1 }} order={{ base: 2, md: 1 }}>
-        <InputGroup>
-          <InputLeftElement pointerEvents="none" children={<SearchIcon />} />
-          <Input
-            placeholder={t("search")}
-            value={search}
-            borderColor="light-border"
-            onChange={onChange}
-          />
+        <HStack spacing={2} align="stretch" w="full">
+          <InputGroup flex="1" minW={0}>
+            <InputLeftElement pointerEvents="none" children={<SearchIcon />} />
+            <Input
+              placeholder={t("search")}
+              value={search}
+              borderColor="light-border"
+              onChange={onChange}
+            />
 
-          <InputRightElement>
-            {loading && <Spinner size="xs" />}
-            {filters.search && filters.search.length > 0 && (
-              <IconButton
-                onClick={clear}
-                aria-label="clear"
-                size="xs"
-                variant="ghost"
-              >
-                <ClearIcon />
-              </IconButton>
-            )}
-          </InputRightElement>
-        </InputGroup>
+            <InputRightElement>
+              {loading && <Spinner size="xs" />}
+              {filters.search && filters.search.length > 0 && (
+                <IconButton
+                  type="button"
+                  onClick={clear}
+                  aria-label="clear"
+                  size="xs"
+                  variant="ghost"
+                >
+                  <ClearIcon />
+                </IconButton>
+              )}
+            </InputRightElement>
+          </InputGroup>
+          {userData.is_sudo && (
+            <Button
+              type="button"
+              flexShrink={0}
+              size="sm"
+              variant="outline"
+              bg="white"
+              color="gray.800"
+              borderColor="gray.300"
+              fontWeight="semibold"
+              px={3}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setPoolSettingsOpen(true);
+              }}
+              _hover={{ bg: "gray.50" }}
+              _active={{ bg: "gray.100" }}
+              _dark={{
+                bg: "white",
+                color: "gray.800",
+                borderColor: "gray.200",
+                _hover: { bg: "gray.100" },
+                _active: { bg: "gray.200" },
+              }}
+            >
+              {t("filters.trafficGroupsButton")}
+            </Button>
+          )}
+        </HStack>
       </GridItem>
       <GridItem colSpan={2} order={{ base: 1, md: 2 }}>
         <HStack justifyContent="flex-end" alignItems="center" h="full">
           <IconButton
+            type="button"
             aria-label="refresh users"
             disabled={loading}
             onClick={refetchUsers}
@@ -132,27 +159,8 @@ export const Filters: FC<FilterProps> = ({ ...props }) => {
               })}
             />
           </IconButton>
-          {userData.is_sudo && (
-            <Tooltip
-              label={t("filters.subscriptionTrafficPools")}
-              placement="bottom"
-            >
-              <IconButton
-                aria-label={t("filters.subscriptionTrafficPools")}
-                size="sm"
-                onClick={() => setPoolSettingsOpen(true)}
-                bg="black"
-                color="white"
-                borderRadius="md"
-                minW="36px"
-                _hover={{ bg: "gray.800" }}
-                _active={{ bg: "gray.900" }}
-              >
-                <PoolSettingsIcon />
-              </IconButton>
-            </Tooltip>
-          )}
           <Button
+            type="button"
             colorScheme="primary"
             size="sm"
             onClick={() => onCreateUser(true)}

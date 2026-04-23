@@ -684,13 +684,13 @@ const SubscriptionTrialLabel: FC<{ user: User }> = ({ user }) => {
       py={0.5}
       borderRadius="md"
       bg={trial ? "yellow.400" : "green.500"}
-      color={trial ? "gray.900" : "white"}
+      color="white"
       borderWidth="1px"
       borderColor={trial ? "yellow.500" : "green.600"}
       flexShrink={0}
       _dark={{
         bg: trial ? "yellow.300" : "green.500",
-        color: trial ? "gray.900" : "white",
+        color: "white",
         borderColor: trial ? "yellow.400" : "green.400",
       }}
     >
