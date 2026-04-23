@@ -7,8 +7,9 @@ Create Date: 2026-04-23 18:00:00.000000
 """
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy import inspect
+from sqlalchemy import cast, inspect, update
 from sqlalchemy.exc import NoSuchTableError
+from sqlalchemy.sql import quoted_name
 
 
 revision = "a1d2e3f4b5c6"
@@ -23,6 +24,19 @@ def _has_column(bind, table_name: str, column_name: str) -> bool:
     except NoSuchTableError:
         return False
     return any(c["name"] == column_name for c in cols)
+
+
+def _backfill_system_json_column(column_name: str) -> None:
+    """Table name `system` is reserved in MySQL 8; use dialect-quoted identifiers."""
+    tbl = sa.table(
+        quoted_name("system", quote=True),
+        sa.column(column_name, sa.JSON()),
+    )
+    op.execute(
+        update(tbl)
+        .where(tbl.c[column_name].is_(None))
+        .values(**{column_name: cast(sa.literal("[]"), sa.JSON())})
+    )
 
 
 def upgrade() -> None:
@@ -64,12 +78,7 @@ def upgrade() -> None:
             sa.Column("paid_metered_node_ids", sa.JSON(), nullable=True),
         )
     if _has_column(bind, "system", "trial_metered_node_ids"):
-        op.execute(
-            sa.text(
-                "UPDATE `system` SET trial_metered_node_ids = CAST('[]' AS JSON) "
-                "WHERE trial_metered_node_ids IS NULL"
-            )
-        )
+        _backfill_system_json_column("trial_metered_node_ids")
         op.alter_column(
             "system",
             "trial_metered_node_ids",
@@ -77,12 +86,7 @@ def upgrade() -> None:
             nullable=False,
         )
     if _has_column(bind, "system", "paid_metered_node_ids"):
-        op.execute(
-            sa.text(
-                "UPDATE `system` SET paid_metered_node_ids = CAST('[]' AS JSON) "
-                "WHERE paid_metered_node_ids IS NULL"
-            )
-        )
+        _backfill_system_json_column("paid_metered_node_ids")
         op.alter_column(
             "system",
             "paid_metered_node_ids",
