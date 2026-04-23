@@ -192,6 +192,8 @@
   "usersTable.status": "status",
   "usersTable.total": "Total",
   "usersTable.totalTraffic": "Total traffic",
+  "usersTable.meteredLifetimeTotal": "Toward limit (metered)",
+  "usersTable.allNodesLifetimeTotal": "All nodes (total)",
   "usersTable.trialBadge": "Trial",
   "usersTable.paidBadge": "Full",
   "userDialog.trialSubscription": "Trial subscription",

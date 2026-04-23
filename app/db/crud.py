@@ -562,6 +562,7 @@ def update_user(db: Session, dbuser: User, modify: UserModify) -> User:
     if "is_trial" in modify.model_fields_set:
         if modify.is_trial != dbuser.is_trial:
             dbuser.used_traffic = 0
+            dbuser.used_traffic_total = 0
         dbuser.is_trial = modify.is_trial
 
     dbuser.edit_at = datetime.utcnow()
@@ -585,10 +586,12 @@ def reset_user_data_usage(db: Session, dbuser: User) -> User:
     usage_log = UserUsageResetLogs(
         user=dbuser,
         used_traffic_at_reset=dbuser.used_traffic,
+        used_traffic_total_at_reset=dbuser.used_traffic_total,
     )
     db.add(usage_log)
 
     dbuser.used_traffic = 0
+    dbuser.used_traffic_total = 0
     dbuser.node_usages.clear()
     if dbuser.status not in (UserStatus.expired or UserStatus.disabled):
         dbuser.status = UserStatus.active.value
@@ -621,6 +624,7 @@ def reset_user_by_next(db: Session, dbuser: User) -> User:
     usage_log = UserUsageResetLogs(
         user=dbuser,
         used_traffic_at_reset=dbuser.used_traffic,
+        used_traffic_total_at_reset=dbuser.used_traffic_total,
     )
     db.add(usage_log)
 
@@ -632,6 +636,7 @@ def reset_user_by_next(db: Session, dbuser: User) -> User:
     dbuser.expire = dbuser.next_plan.expire
 
     dbuser.used_traffic = 0
+    dbuser.used_traffic_total = 0
     db.delete(dbuser.next_plan)
     dbuser.next_plan = None
     db.add(dbuser)
@@ -791,6 +796,7 @@ def reset_all_users_data_usage(db: Session, admin: Optional[Admin] = None):
 
     for dbuser in query.all():
         dbuser.used_traffic = 0
+        dbuser.used_traffic_total = 0
         if dbuser.status not in [UserStatus.on_hold, UserStatus.expired, UserStatus.disabled]:
             dbuser.status = UserStatus.active
         dbuser.usage_logs.clear()

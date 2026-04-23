@@ -354,6 +354,7 @@ class UserResponse(User):
     sub_live_uplink_bps: int = 0
     sub_live_downlink_bps: int = 0
     lifetime_used_traffic: int = 0
+    lifetime_total_used_traffic: int = 0
     created_at: datetime
     links: List[str] = []
     subscription_url: str = ""
@@ -396,7 +397,14 @@ class UserResponse(User):
             v = {p.type: p.settings for p in v}
         return super().validate_proxies(v, values, **kwargs)
 
-    @field_validator("used_traffic", "lifetime_used_traffic", "sub_live_uplink_bps", "sub_live_downlink_bps", mode='before')
+    @field_validator(
+        "used_traffic",
+        "lifetime_used_traffic",
+        "lifetime_total_used_traffic",
+        "sub_live_uplink_bps",
+        "sub_live_downlink_bps",
+        mode="before",
+    )
     def cast_to_int(cls, v):
         if v is None:  # Allow None values
             return v

@@ -192,6 +192,8 @@
   "usersTable.status": "Статус",
   "usersTable.total": "Всего",
   "usersTable.totalTraffic": "Всего трафика",
+  "usersTable.meteredLifetimeTotal": "К лимиту (лимитные ноды)",
+  "usersTable.allNodesLifetimeTotal": "Все ноды (всего)",
   "usersTable.trialBadge": "Пробная",
   "usersTable.paidBadge": "Полная",
   "userDialog.trialSubscription": "Пробная подписка",

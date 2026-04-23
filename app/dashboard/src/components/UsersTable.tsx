@@ -80,6 +80,8 @@ type UsageSliderProps = {
   total: number | null;
   dataLimitResetStrategy: string | null;
   totalUsedTraffic: number;
+  /** Cumulative bytes on all nodes (metered + unmetered). */
+  allNodesLifetimeTraffic: number;
   liveUplinkBps?: number;
   liveDownlinkBps?: number;
 } & SliderProps;
@@ -98,6 +100,7 @@ const UsageSliderCompact: FC<UsageSliderProps> = (props) => {
     used,
     total,
     totalUsedTraffic,
+    allNodesLifetimeTraffic,
     liveUplinkBps = 0,
     liveDownlinkBps = 0,
   } = props;
@@ -126,8 +129,14 @@ const UsageSliderCompact: FC<UsageSliderProps> = (props) => {
         </Text>
       </HStack>
       <Text fontSize="xxs" color="gray.500" _dark={{ color: "gray.500" }}>
-        ↑ {formatBps(liveUplinkBps)} · ↓ {formatBps(liveDownlinkBps)} ·{" "}
-        {t("usersTable.totalTraffic")}: {formatBytes(totalUsedTraffic)}
+        ↑ {formatBps(liveUplinkBps)} · ↓ {formatBps(liveDownlinkBps)}
+      </Text>
+      <Text fontSize="xxs" color="gray.500" _dark={{ color: "gray.500" }}>
+        {t("usersTable.meteredLifetimeTotal")}: {formatBytes(totalUsedTraffic)}
+      </Text>
+      <Text fontSize="xxs" color="gray.500" _dark={{ color: "gray.500" }}>
+        {t("usersTable.allNodesLifetimeTotal")}:{" "}
+        {formatBytes(allNodesLifetimeTraffic)}
       </Text>
     </VStack>
   );
@@ -138,6 +147,7 @@ const UsageSlider: FC<UsageSliderProps> = (props) => {
     total,
     dataLimitResetStrategy,
     totalUsedTraffic,
+    allNodesLifetimeTraffic,
     liveUplinkBps = 0,
     liveDownlinkBps = 0,
     ...restOfProps
@@ -183,9 +193,16 @@ const UsageSlider: FC<UsageSliderProps> = (props) => {
               : "")
           )}
         </Text>
-        <Text>
-          {t("usersTable.total")}: {formatBytes(totalUsedTraffic)}
-        </Text>
+        <VStack align="flex-end" spacing={0}>
+          <Text>
+            {t("usersTable.meteredLifetimeTotal")}:{" "}
+            {formatBytes(totalUsedTraffic)}
+          </Text>
+          <Text>
+            {t("usersTable.allNodesLifetimeTotal")}:{" "}
+            {formatBytes(allNodesLifetimeTraffic)}
+          </Text>
+        </VStack>
       </HStack>
       <Text fontSize="xs" color="gray.500" _dark={{ color: "gray.500" }}>
         ↑ {formatBps(liveUplinkBps)} · ↓ {formatBps(liveDownlinkBps)}
@@ -394,6 +411,10 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                       <Td borderBottom={0} minW="100px" pr={0}>
                         <UsageSliderCompact
                           totalUsedTraffic={user.lifetime_used_traffic}
+                          allNodesLifetimeTraffic={
+                            user.lifetime_total_used_traffic ??
+                            user.lifetime_used_traffic
+                          }
                           dataLimitResetStrategy={
                             user.data_limit_reset_strategy
                           }
@@ -450,6 +471,10 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                                 <Box width="full" minW="230px">
                                   <UsageSlider
                                     totalUsedTraffic={
+                                      user.lifetime_used_traffic
+                                    }
+                                    allNodesLifetimeTraffic={
+                                      user.lifetime_total_used_traffic ??
                                       user.lifetime_used_traffic
                                     }
                                     dataLimitResetStrategy={
@@ -639,6 +664,10 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                   <Td width="350px" minW="230px">
                     <UsageSlider
                       totalUsedTraffic={user.lifetime_used_traffic}
+                      allNodesLifetimeTraffic={
+                        user.lifetime_total_used_traffic ??
+                        user.lifetime_used_traffic
+                      }
                       dataLimitResetStrategy={user.data_limit_reset_strategy}
                       used={user.used_traffic}
                       total={user.data_limit}

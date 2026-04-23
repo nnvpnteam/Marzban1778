@@ -66,6 +66,7 @@ class User(Base):
     proxies = relationship("Proxy", back_populates="user", cascade="all, delete-orphan")
     status = Column(Enum(UserStatus), nullable=False, default=UserStatus.active)
     used_traffic = Column(BigInteger, default=0)
+    used_traffic_total = Column(BigInteger, default=0, nullable=False, server_default="0")
     node_usages = relationship("NodeUserUsage", back_populates="user", cascade="all, delete-orphan")
     notification_reminders = relationship("NotificationReminder", back_populates="user", cascade="all, delete-orphan")
     data_limit = Column(BigInteger, nullable=True)
@@ -130,6 +131,15 @@ class User(Base):
             sum([log.used_traffic_at_reset for log in self.usage_logs])
             + self.used_traffic
         )
+
+    @property
+    def lifetime_total_used_traffic(self) -> int:
+        """Bytes across all nodes since last reset (metered + unmetered)."""
+        prev = sum(
+            int(log.used_traffic_total_at_reset or 0)
+            for log in self.usage_logs
+        )
+        return int(prev + int(self.used_traffic_total or 0))
 
     @property
     def last_traffic_reset_time(self):
@@ -212,6 +222,7 @@ class UserUsageResetLogs(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("User", back_populates="usage_logs")
     used_traffic_at_reset = Column(BigInteger, nullable=False)
+    used_traffic_total_at_reset = Column(BigInteger, nullable=True)
     reset_at = Column(DateTime, default=datetime.utcnow)
 
 

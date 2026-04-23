@@ -246,13 +246,14 @@ def record_user_usages():
             )
             user_row_delta[uid] = metered_sum
         else:
-            user_row_delta[uid] = 0
+            user_row_delta[uid] = total
 
         aid = uid_to_admin.get(uid)
         if aid:
             admin_usage[aid] += total
 
     users_usage = [{"uid": uid, "value": user_row_delta[uid]} for uid in all_uids]
+    users_total_delta = [{"uid": uid, "tval": int(user_total[uid])} for uid in all_uids]
     speed_rows = [
         {
             "uid": uid,
@@ -271,6 +272,13 @@ def record_user_usages():
         )
 
         safe_execute(db, stmt, users_usage)
+
+        stmt_total = (
+            update(User)
+            .where(User.id == bindparam("uid"))
+            .values(used_traffic_total=User.used_traffic_total + bindparam("tval"))
+        )
+        safe_execute(db, stmt_total, users_total_delta)
 
         spd_stmt = (
             update(User)

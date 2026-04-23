@@ -54,6 +54,8 @@ export type User = {
   node_data_limits?: Record<string, number>;
   hwid_devices?: UserHWIDDevice[];
   lifetime_used_traffic: number;
+  /** Bytes on all nodes (metered + unmetered) since last reset. */
+  lifetime_total_used_traffic?: number;
   username: string;
   used_traffic: number;
   is_trial: boolean;
