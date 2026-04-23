@@ -93,6 +93,9 @@ class User(Base):
     node_traffic_limits = relationship(
         "UserNodeTrafficLimit", back_populates="user", cascade="all, delete-orphan"
     )
+    is_trial = Column(Boolean, nullable=False, default=False, server_default="0")
+    sub_live_uplink_bps = Column(Integer, nullable=False, default=0, server_default="0")
+    sub_live_downlink_bps = Column(Integer, nullable=False, default=0, server_default="0")
 
     # * Positive values: User will be deleted after the value of this field in days automatically.
     # * Negative values: User won't be deleted automatically at all.
@@ -286,6 +289,8 @@ class System(Base):
     id = Column(Integer, primary_key=True)
     uplink = Column(BigInteger, default=0)
     downlink = Column(BigInteger, default=0)
+    trial_metered_node_ids = Column(JSON, nullable=False)
+    paid_metered_node_ids = Column(JSON, nullable=False)
 
 
 class JWT(Base):

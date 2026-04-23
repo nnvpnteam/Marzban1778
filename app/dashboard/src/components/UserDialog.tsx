@@ -33,6 +33,7 @@ import {
 } from "@chakra-ui/react";
 import {
   ChartPieIcon,
+  Cog6ToothIcon,
   ComputerDesktopIcon,
   DevicePhoneMobileIcon,
   PencilIcon,
@@ -62,9 +63,11 @@ import { DeleteIcon } from "./DeleteUserModal";
 import { Icon } from "./Icon";
 import { Input } from "./Input";
 import { RadioGroup } from "./RadioGroup";
+import { SubscriptionTrafficSettingsModal } from "./SubscriptionTrafficSettingsModal";
 import { UsageFilter, createUsageConfig } from "./UsageFilter";
 import { ReloadIcon } from "./Filters";
 import classNames from "classnames";
+import useGetUser from "hooks/useGetUser";
 
 const AddUserIcon = chakra(UserPlusIcon, {
   baseStyle: {
@@ -292,6 +295,7 @@ const formatUser = (user: User): FormType => {
   );
   return {
     ...user,
+    is_trial: !!user.is_trial,
     data_limit: user.data_limit
       ? Number((user.data_limit / 1073741824).toFixed(5))
       : user.data_limit,
@@ -327,6 +331,7 @@ const getDefaultValues = (): FormType => {
       trojan: { password: "" },
       shadowsocks: { password: "", method: "chacha20-ietf-poly1305" },
     },
+    is_trial: false,
   };
 };
 
@@ -407,6 +412,7 @@ const baseSchema = {
     });
     return ins;
   }),
+  is_trial: z.boolean(),
 };
 
 const schema = z.discriminatedUnion("status", [
@@ -460,6 +466,8 @@ export const UserDialog: FC<UserDialogProps> = () => {
 
   const [usageVisible, setUsageVisible] = useState(false);
   const [deletingDeviceId, setDeletingDeviceId] = useState<string | null>(null);
+  const [trafficSettingsOpen, setTrafficSettingsOpen] = useState(false);
+  const { userData } = useGetUser();
   const handleUsageToggle = () => {
     setUsageVisible((current) => !current);
   };
@@ -577,6 +585,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
     setError(null);
     setUsageVisible(false);
     setUsageFilter("1m");
+    setTrafficSettingsOpen(false);
   };
 
   const handleResetUsage = () => {
@@ -607,6 +616,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
   };
 
   return (
+    <>
     <Modal isOpen={isOpen} onClose={onClose} size={{ base: "full", md: "4xl" }}>
       <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
       <FormProvider {...form}>
@@ -766,6 +776,33 @@ export const UserDialog: FC<UserDialogProps> = () => {
                             );
                           }}
                         />
+                      </FormControl>
+                      <FormControl mb={"10px"}>
+                        <FormLabel>{t("userDialog.trialSubscription")}</FormLabel>
+                        <HStack justify="space-between" align="center">
+                          <Controller
+                            name="is_trial"
+                            control={form.control}
+                            render={({ field }) => (
+                              <Switch
+                                colorScheme="yellow"
+                                isChecked={!!field.value}
+                                onChange={(e) => field.onChange(e.target.checked)}
+                                isDisabled={disabled}
+                              />
+                            )}
+                          />
+                          {userData.is_sudo && (
+                            <Button
+                              size="xs"
+                              variant="outline"
+                              leftIcon={<Cog6ToothIcon width={14} height={14} />}
+                              onClick={() => setTrafficSettingsOpen(true)}
+                            >
+                              {t("userDialog.subscriptionTrafficSettings")}
+                            </Button>
+                          )}
+                        </HStack>
                       </FormControl>
                       <FormControl mb={"10px"}>
                         <FormLabel>HWID / Device limit</FormLabel>
@@ -1329,5 +1366,10 @@ export const UserDialog: FC<UserDialogProps> = () => {
         </ModalContent>
       </FormProvider>
     </Modal>
+    <SubscriptionTrafficSettingsModal
+      isOpen={trafficSettingsOpen}
+      onClose={() => setTrafficSettingsOpen(false)}
+    />
+    </>
   );
 };

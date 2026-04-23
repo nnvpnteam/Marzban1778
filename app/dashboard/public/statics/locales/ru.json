@@ -190,5 +190,19 @@
   "usersTable.noUser": "В системе нет созданных пользователей",
   "usersTable.noUserMatched": "Похоже, нет пользователя, соответствующего вашему запросу",
   "usersTable.status": "Статус",
-  "usersTable.total": "Всего"
+  "usersTable.total": "Всего",
+  "usersTable.totalTraffic": "Всего трафика",
+  "usersTable.trialBadge": "Пробная",
+  "usersTable.paidBadge": "Оплач.",
+  "userDialog.trialSubscription": "Пробная подписка",
+  "userDialog.subscriptionTrafficSettings": "Пулы узлов (трафик)",
+  "subscriptionTraffic.title": "Трафик подписки (пробная / оплаченная)",
+  "subscriptionTraffic.hint": "Нажмите узел, чтобы включить его в лимитный пул для этого типа подписки. Узлы вне пула не расходуют персональный лимит пользователя. Лимит трафика задаётся у каждого пользователя отдельно.",
+  "subscriptionTraffic.tabTrial": "Пробная",
+  "subscriptionTraffic.tabPaid": "Оплаченная",
+  "subscriptionTraffic.core": "Ядро (основной сервер)",
+  "subscriptionTraffic.loading": "Загрузка…",
+  "subscriptionTraffic.saved": "Настройки сохранены",
+  "subscriptionTraffic.saveError": "Не удалось сохранить",
+  "subscriptionTraffic.loadError": "Не удалось загрузить"
 }

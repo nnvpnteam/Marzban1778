@@ -43,6 +43,10 @@ from app.models.user import (
     UserStatus,
     UserUsageResponse,
 )
+from app.models.subscription_traffic import (
+    SubscriptionTrafficSettingsModify,
+    SubscriptionTrafficSettingsResponse,
+)
 from app.models.user_template import UserTemplateCreate, UserTemplateModify
 from app.utils.helpers import calculate_expiration_days, calculate_usage_percent
 from config import (
@@ -417,7 +421,8 @@ def create_user(db: Session, user: UserCreate, admin: Admin = None) -> User:
             expire=user.next_plan.expire,
             add_remaining_traffic=user.next_plan.add_remaining_traffic,
             fire_on_either=user.next_plan.fire_on_either,
-        ) if user.next_plan else None
+        ) if user.next_plan else None,
+        is_trial=bool(user.is_trial),
     )
     _replace_user_node_limits(dbuser, user.node_data_limits or {})
     db.add(dbuser)
@@ -553,6 +558,11 @@ def update_user(db: Session, dbuser: User, modify: UserModify) -> User:
 
     if modify.node_data_limits is not None:
         _replace_user_node_limits(dbuser, modify.node_data_limits)
+
+    if "is_trial" in modify.model_fields_set:
+        if modify.is_trial != dbuser.is_trial:
+            dbuser.used_traffic = 0
+        dbuser.is_trial = modify.is_trial
 
     dbuser.edit_at = datetime.utcnow()
 
@@ -1624,3 +1634,41 @@ def count_online_users(db: Session, minutes: int = 2, admin: Admin = None):
     if admin:
         query = query.filter(User.admin == admin)
     return query.scalar() or 0
+
+
+def subscription_metered_nodes(raw) -> frozenset:
+    """Normalize JSON node id list (``null`` = main core) for subscription traffic pools."""
+    if not raw:
+        return frozenset()
+    out = []
+    for x in raw:
+        if x is None:
+            out.append(None)
+        else:
+            out.append(int(x))
+    return frozenset(out)
+
+
+def get_subscription_traffic_settings(
+    db: Session,
+) -> SubscriptionTrafficSettingsResponse:
+    sys = get_system_usage(db)
+    return SubscriptionTrafficSettingsResponse(
+        trial_metered_node_ids=list(sys.trial_metered_node_ids or []),
+        paid_metered_node_ids=list(sys.paid_metered_node_ids or []),
+    )
+
+
+def update_subscription_traffic_settings(
+    db: Session, modify: SubscriptionTrafficSettingsModify
+) -> SubscriptionTrafficSettingsResponse:
+    sys = get_system_usage(db)
+    patch = modify.model_dump(exclude_unset=True)
+    if "trial_metered_node_ids" in patch and patch["trial_metered_node_ids"] is not None:
+        sys.trial_metered_node_ids = list(patch["trial_metered_node_ids"])
+    if "paid_metered_node_ids" in patch and patch["paid_metered_node_ids"] is not None:
+        sys.paid_metered_node_ids = list(patch["paid_metered_node_ids"])
+    db.add(sys)
+    db.commit()
+    db.refresh(sys)
+    return get_subscription_traffic_settings(db)

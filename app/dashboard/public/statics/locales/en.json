@@ -190,5 +190,19 @@
   "usersTable.noUser": "There is no user added to the system",
   "usersTable.noUserMatched": "It seems there is no user matched with what you are looking for",
   "usersTable.status": "status",
-  "usersTable.total": "Total"
+  "usersTable.total": "Total",
+  "usersTable.totalTraffic": "Total traffic",
+  "usersTable.trialBadge": "Trial",
+  "usersTable.paidBadge": "Paid",
+  "userDialog.trialSubscription": "Trial subscription",
+  "userDialog.subscriptionTrafficSettings": "Traffic pool settings",
+  "subscriptionTraffic.title": "Subscription traffic (trial / paid)",
+  "subscriptionTraffic.hint": "Tap a node to include it in the metered pool for that subscription type. Nodes not in the pool are unlimited for the user limit. User traffic caps are set per user, not here.",
+  "subscriptionTraffic.tabTrial": "Trial",
+  "subscriptionTraffic.tabPaid": "Paid",
+  "subscriptionTraffic.core": "Core (main server)",
+  "subscriptionTraffic.loading": "Loading…",
+  "subscriptionTraffic.saved": "Settings saved",
+  "subscriptionTraffic.saveError": "Could not save settings",
+  "subscriptionTraffic.loadError": "Could not load settings"
 }

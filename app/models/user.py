@@ -86,6 +86,10 @@ class User(BaseModel):
     on_hold_timeout: Optional[Union[datetime, None]] = Field(None, nullable=True)
     hwid_device_limit: Optional[int] = Field(ge=0, default=None, nullable=True)
     node_data_limits: Optional[Dict[int, int]] = Field(default=None)
+    is_trial: bool = Field(
+        default=False,
+        description="Trial subscription: metered node pool from global trial settings applies to data_limit",
+    )
 
     auto_delete_in_days: Optional[int] = Field(None, nullable=True)
 
@@ -347,6 +351,8 @@ class UserResponse(User):
     username: str
     status: UserStatus
     used_traffic: int
+    sub_live_uplink_bps: int = 0
+    sub_live_downlink_bps: int = 0
     lifetime_used_traffic: int = 0
     created_at: datetime
     links: List[str] = []
@@ -390,7 +396,7 @@ class UserResponse(User):
             v = {p.type: p.settings for p in v}
         return super().validate_proxies(v, values, **kwargs)
 
-    @field_validator("used_traffic", "lifetime_used_traffic", mode='before')
+    @field_validator("used_traffic", "lifetime_used_traffic", "sub_live_uplink_bps", "sub_live_downlink_bps", mode='before')
     def cast_to_int(cls, v):
         if v is None:  # Allow None values
             return v

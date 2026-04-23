@@ -43,7 +43,7 @@ import { FC, Fragment, useEffect, useState } from "react";
 import CopyToClipboard from "react-copy-to-clipboard";
 import { useTranslation } from "react-i18next";
 import { User } from "types/User";
-import { formatBytes } from "utils/formatByte";
+import { formatBps, formatBytes } from "utils/formatByte";
 import { OnlineBadge } from "./OnlineBadge";
 import { OnlineStatus } from "./OnlineStatus";
 import { Pagination } from "./Pagination";
@@ -80,6 +80,8 @@ type UsageSliderProps = {
   total: number | null;
   dataLimitResetStrategy: string | null;
   totalUsedTraffic: number;
+  liveUplinkBps?: number;
+  liveDownlinkBps?: number;
 } & SliderProps;
 
 const getResetStrategy = (strategy: string): string => {
@@ -92,29 +94,42 @@ const getResetStrategy = (strategy: string): string => {
   return "No";
 };
 const UsageSliderCompact: FC<UsageSliderProps> = (props) => {
-  const { used, total, dataLimitResetStrategy, totalUsedTraffic } = props;
+  const {
+    used,
+    total,
+    totalUsedTraffic,
+    liveUplinkBps = 0,
+    liveDownlinkBps = 0,
+  } = props;
   const isUnlimited = total === 0 || total === null;
+  const { t } = useTranslation();
   return (
-    <HStack
-      justifyContent="space-between"
-      fontSize="xs"
-      fontWeight="medium"
-      color="gray.600"
-      _dark={{
-        color: "gray.400",
-      }}
-    >
-      <Text>
-        {formatBytes(used)} /{" "}
-        {isUnlimited ? (
-          <Text as="span" fontFamily="system-ui">
-            ∞
-          </Text>
-        ) : (
-          formatBytes(total)
-        )}
+    <VStack align="stretch" spacing={0}>
+      <HStack
+        justifyContent="space-between"
+        fontSize="xs"
+        fontWeight="medium"
+        color="gray.600"
+        _dark={{
+          color: "gray.400",
+        }}
+      >
+        <Text>
+          {formatBytes(used)} /{" "}
+          {isUnlimited ? (
+            <Text as="span" fontFamily="system-ui">
+              ∞
+            </Text>
+          ) : (
+            formatBytes(total)
+          )}
+        </Text>
+      </HStack>
+      <Text fontSize="xxs" color="gray.500" _dark={{ color: "gray.500" }}>
+        ↑ {formatBps(liveUplinkBps)} · ↓ {formatBps(liveDownlinkBps)} ·{" "}
+        {t("usersTable.totalTraffic")}: {formatBytes(totalUsedTraffic)}
       </Text>
-    </HStack>
+    </VStack>
   );
 };
 const UsageSlider: FC<UsageSliderProps> = (props) => {
@@ -123,8 +138,11 @@ const UsageSlider: FC<UsageSliderProps> = (props) => {
     total,
     dataLimitResetStrategy,
     totalUsedTraffic,
+    liveUplinkBps = 0,
+    liveDownlinkBps = 0,
     ...restOfProps
   } = props;
+  const { t } = useTranslation();
   const isUnlimited = total === 0 || total === null;
   const isReached = !isUnlimited && (used / total) * 100 >= 100;
   return (
@@ -169,6 +187,9 @@ const UsageSlider: FC<UsageSliderProps> = (props) => {
           {t("usersTable.total")}: {formatBytes(totalUsedTraffic)}
         </Text>
       </HStack>
+      <Text fontSize="xs" color="gray.500" _dark={{ color: "gray.500" }}>
+        ↑ {formatBps(liveUplinkBps)} · ↓ {formatBps(liveDownlinkBps)}
+      </Text>
     </>
   );
 };
@@ -356,7 +377,10 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                         <div className="flex-status">
                           <OnlineBadge lastOnline={user.online_at} />
                           <Text isTruncated>{user.username}</Text>
-                          <SubscriptionDevicesLabel user={user} />
+                          <HStack spacing={1} flexShrink={0}>
+                            <SubscriptionDevicesLabel user={user} />
+                            <SubscriptionTrialLabel user={user} />
+                          </HStack>
                         </div>
                       </Td>
                       <Td borderBottom={0} minW="50px" pl={0} pr={0}>
@@ -375,6 +399,8 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                           }
                           used={user.used_traffic}
                           total={user.data_limit}
+                          liveUplinkBps={user.sub_live_uplink_bps}
+                          liveDownlinkBps={user.sub_live_downlink_bps}
                           colorScheme={statusColors[user.status].bandWidthColor}
                         />
                       </Td>
@@ -431,6 +457,8 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                                     }
                                     used={user.used_traffic}
                                     total={user.data_limit}
+                                    liveUplinkBps={user.sub_live_uplink_bps}
+                                    liveDownlinkBps={user.sub_live_downlink_bps}
                                     colorScheme={
                                       statusColors[user.status].bandWidthColor
                                     }
@@ -595,7 +623,10 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                     <div className="flex-status">
                       <OnlineBadge lastOnline={user.online_at} />
                       {user.username}
-                      <SubscriptionDevicesLabel user={user} />
+                      <HStack spacing={1} flexShrink={0}>
+                        <SubscriptionDevicesLabel user={user} />
+                        <SubscriptionTrialLabel user={user} />
+                      </HStack>
                       <OnlineStatus lastOnline={user.online_at} />
                     </div>
                   </Td>
@@ -611,6 +642,8 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                       dataLimitResetStrategy={user.data_limit_reset_strategy}
                       used={user.used_traffic}
                       total={user.data_limit}
+                      liveUplinkBps={user.sub_live_uplink_bps}
+                      liveDownlinkBps={user.sub_live_downlink_bps}
                       colorScheme={statusColors[user.status].bandWidthColor}
                     />
                   </Td>
@@ -636,6 +669,34 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
 
 type ActionButtonsProps = {
   user: User;
+};
+
+const SubscriptionTrialLabel: FC<{ user: User }> = ({ user }) => {
+  const { t } = useTranslation();
+  const trial = !!user.is_trial;
+  return (
+    <Text
+      as="span"
+      fontSize="xs"
+      fontWeight="semibold"
+      whiteSpace="nowrap"
+      px={2}
+      py={0.5}
+      borderRadius="md"
+      bg={trial ? "yellow.400" : "green.500"}
+      color={trial ? "gray.900" : "white"}
+      borderWidth="1px"
+      borderColor={trial ? "yellow.500" : "green.600"}
+      flexShrink={0}
+      _dark={{
+        bg: trial ? "yellow.300" : "green.500",
+        color: trial ? "gray.900" : "white",
+        borderColor: trial ? "yellow.400" : "green.400",
+      }}
+    >
+      {trial ? t("usersTable.trialBadge") : t("usersTable.paidBadge")}
+    </Text>
+  );
 };
 
 const SubscriptionDevicesLabel: FC<{ user: User }> = ({ user }) => {

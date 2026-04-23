@@ -56,6 +56,9 @@ export type User = {
   lifetime_used_traffic: number;
   username: string;
   used_traffic: number;
+  is_trial: boolean;
+  sub_live_uplink_bps: number;
+  sub_live_downlink_bps: number;
   status: Status;
   links: string[];
   subscription_url: string;
@@ -77,6 +80,7 @@ export type UserCreate = Pick<
   | "username"
   | "status"
   | "note"
+  | "is_trial"
 >;
 
 export type UserApi = {

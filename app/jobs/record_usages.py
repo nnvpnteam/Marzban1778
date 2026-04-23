@@ -2,7 +2,7 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from operator import attrgetter
-from typing import Union
+from typing import Dict, List, Tuple, Union
 
 from pymysql.err import OperationalError
 from sqlalchemy import and_, bindparam, insert, select, update
@@ -107,15 +107,48 @@ def record_node_stats(params: dict, node_id: Union[int, None]):
         safe_execute(db, stmt, params)
 
 
-def get_users_stats(api: XRayAPI):
+def _collect_user_stats_for_node(api: XRayAPI, coefficient: float) -> Tuple[
+    List[dict], Dict[int, int], Dict[int, int]
+]:
+    """
+    Returns (params for record_user_stats with uid/value),
+            uplink bytes per uid this interval (after coefficient),
+            downlink bytes per uid this interval.
+    """
+    upl = defaultdict(int)
+    dnl = defaultdict(int)
+    unk = defaultdict(int)
     try:
-        params = defaultdict(int)
         for stat in filter(attrgetter('value'), api.get_users_stats(reset=True, timeout=30)):
-            params[stat.name.split('.', 1)[0]] += stat.value
-        params = list({"uid": uid, "value": value} for uid, value in params.items())
-        return params
+            uid = int(stat.name.split('.', 1)[0])
+            v = int(stat.value * coefficient)
+            lk = (stat.link or "").lower()
+            if lk == "uplink":
+                upl[uid] += v
+            elif lk == "downlink":
+                dnl[uid] += v
+            else:
+                unk[uid] += v
     except xray_exc.XrayError:
-        return []
+        return [], {}, {}
+
+    uids = set(upl) | set(dnl) | set(unk)
+    params = []
+    up_out: Dict[int, int] = {}
+    dn_out: Dict[int, int] = {}
+    for uid in uids:
+        u_extra = upl[uid]
+        d_extra = dnl[uid]
+        u_part = u_extra + (unk[uid] // 2)
+        d_part = d_extra + (unk[uid] - (unk[uid] // 2))
+        total = u_extra + d_extra + unk[uid]
+        if total:
+            params.append({"uid": str(uid), "value": total})
+        if u_part:
+            up_out[uid] = u_part
+        if d_part:
+            dn_out[uid] = d_part
+    return params, up_out, dn_out
 
 
 def get_outbounds_stats(api: XRayAPI):
@@ -154,29 +187,81 @@ def record_user_usages():
             api_instances[node_id] = node.api
             usage_coefficient[node_id] = node.usage_coefficient  # fetch the usage coefficient
 
-    with ThreadPoolExecutor(max_workers=10) as executor:
-        futures = {node_id: executor.submit(get_users_stats, api) for node_id, api in api_instances.items()}
-    api_params = {node_id: future.result() for node_id, future in futures.items()}
+    api_params: Dict[Union[int, None], List[dict]] = {}
+    user_speed_up: Dict[int, int] = defaultdict(int)
+    user_speed_down: Dict[int, int] = defaultdict(int)
+    user_node_contrib: Dict[Tuple[int, Union[int, None]], int] = defaultdict(int)
 
-    users_usage = defaultdict(int)
-    for node_id, params in api_params.items():
-        coefficient = usage_coefficient.get(node_id, 1)  # get the usage coefficient for the node
-        for param in params:
-            users_usage[param['uid']] += int(param['value'] * coefficient)  # apply the usage coefficient
-    users_usage = list({"uid": uid, "value": value} for uid, value in users_usage.items())
-    if not users_usage:
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = {
+            nid: executor.submit(
+                _collect_user_stats_for_node,
+                api,
+                usage_coefficient.get(nid, 1),
+            )
+            for nid, api in api_instances.items()
+        }
+    for node_id, fut in futures.items():
+        params, up_map, dn_map = fut.result()
+        api_params[node_id] = params
+        interval = max(1, JOB_RECORD_USER_USAGES_INTERVAL)
+        for uid, v in up_map.items():
+            user_speed_up[uid] += v // interval
+        for uid, v in dn_map.items():
+            user_speed_down[uid] += v // interval
+        for p in params:
+            uid = int(p["uid"])
+            user_node_contrib[(uid, node_id)] += int(p["value"])
+
+    user_total = defaultdict(int)
+    for (uid, _nid), v in user_node_contrib.items():
+        user_total[uid] += v
+
+    all_uids = list(user_total.keys())
+    if not all_uids:
         return
 
     with GetDB() as db:
-        user_admin_map = dict(db.query(User.id, User.admin_id).all())
+        rows = (
+            db.query(User.id, User.admin_id, User.is_trial)
+            .filter(User.id.in_(all_uids))
+            .all()
+        )
+        uid_to_admin = {r[0]: r[1] for r in rows}
+        uid_is_trial = {r[0]: bool(r[2]) for r in rows}
+        sys_row = crud.get_system_usage(db)
+        trial_m = crud.subscription_metered_nodes(sys_row.trial_metered_node_ids)
+        paid_m = crud.subscription_metered_nodes(sys_row.paid_metered_node_ids)
 
+    user_row_delta = {}
     admin_usage = defaultdict(int)
-    for user_usage in users_usage:
-        admin_id = user_admin_map.get(int(user_usage["uid"]))
-        if admin_id:
-            admin_usage[admin_id] += user_usage["value"]
 
-    # record users usage
+    for uid, total in user_total.items():
+        metered = trial_m if uid_is_trial.get(uid) else paid_m
+        if metered:
+            metered_sum = sum(
+                v
+                for (u, nid), v in user_node_contrib.items()
+                if u == uid and nid in metered
+            )
+            user_row_delta[uid] = metered_sum
+        else:
+            user_row_delta[uid] = 0
+
+        aid = uid_to_admin.get(uid)
+        if aid:
+            admin_usage[aid] += total
+
+    users_usage = [{"uid": uid, "value": user_row_delta[uid]} for uid in all_uids]
+    speed_rows = [
+        {
+            "uid": uid,
+            "ul": int(user_speed_up.get(uid, 0)),
+            "dl": int(user_speed_down.get(uid, 0)),
+        }
+        for uid in all_uids
+    ]
+
     with GetDB() as db:
         stmt = update(User). \
             where(User.id == bindparam('uid')). \
@@ -186,6 +271,16 @@ def record_user_usages():
         )
 
         safe_execute(db, stmt, users_usage)
+
+        spd_stmt = (
+            update(User)
+            .where(User.id == bindparam("uid"))
+            .values(
+                sub_live_uplink_bps=bindparam("ul"),
+                sub_live_downlink_bps=bindparam("dl"),
+            )
+        )
+        safe_execute(db, spd_stmt, speed_rows)
 
         admin_data = [{"admin_id": admin_id, "value": value} for admin_id, value in admin_usage.items()]
         if admin_data:

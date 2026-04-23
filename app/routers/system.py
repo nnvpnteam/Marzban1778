@@ -6,6 +6,10 @@ from app import __version__, xray
 from app.db import Session, crud, get_db
 from app.models.admin import Admin
 from app.models.proxy import ProxyHost, ProxyInbound, ProxyTypes
+from app.models.subscription_traffic import (
+    SubscriptionTrafficSettingsModify,
+    SubscriptionTrafficSettingsResponse,
+)
 from app.models.system import SystemStats
 from app.models.user import UserStatus
 from app.utils import responses
@@ -63,6 +67,34 @@ def get_system_stats(
         incoming_bandwidth_speed=realtime_bandwidth_stats.incoming_bytes,
         outgoing_bandwidth_speed=realtime_bandwidth_stats.outgoing_bytes,
     )
+
+
+@router.get(
+    "/subscription_traffic_settings",
+    response_model=SubscriptionTrafficSettingsResponse,
+)
+def get_subscription_traffic_settings(
+    db: Session = Depends(get_db),
+    admin: Admin = Depends(Admin.get_current),
+):
+    """Metered node pools for trial vs paid subscriptions (global)."""
+    _ = admin
+    return crud.get_subscription_traffic_settings(db)
+
+
+@router.put(
+    "/subscription_traffic_settings",
+    response_model=SubscriptionTrafficSettingsResponse,
+    responses={403: responses._403},
+)
+def put_subscription_traffic_settings(
+    payload: SubscriptionTrafficSettingsModify,
+    db: Session = Depends(get_db),
+    admin: Admin = Depends(Admin.check_sudo_admin),
+):
+    """Update metered node pools (sudo only)."""
+    _ = admin
+    return crud.update_subscription_traffic_settings(db, payload)
 
 
 @router.get("/inbounds", response_model=Dict[ProxyTypes, List[ProxyInbound]])
