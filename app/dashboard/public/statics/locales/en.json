@@ -207,5 +207,15 @@
   "subscriptionTraffic.loading": "Loading…",
   "subscriptionTraffic.saved": "Settings saved",
   "subscriptionTraffic.saveError": "Could not save settings",
-  "subscriptionTraffic.loadError": "Could not load settings"
+  "subscriptionTraffic.loadError": "Could not load settings",
+  "subscriptionTraffic.bulkTitle": "Bulk DB adjust for subscription group",
+  "subscriptionTraffic.bulkScopeHint": "Active tab: {{group}} — the operation applies to every user in that subscription group.",
+  "subscriptionTraffic.bulkFieldHint": "Days: added to expire (Unix time) only where expire is set. GiB: added to data_limit only for users with a numeric cap; unlimited (null) limits are skipped. Negative values subtract; data_limit is clamped at 0.",
+  "subscriptionTraffic.bulkDays": "Days ±",
+  "subscriptionTraffic.bulkGb": "GiB ±",
+  "subscriptionTraffic.bulkApply": "Apply to group",
+  "subscriptionTraffic.bulkNeedChange": "Enter a non-zero number of days and/or GiB.",
+  "subscriptionTraffic.bulkConfirm": "Write these changes to the database for all users in the «{{group}}» group?",
+  "subscriptionTraffic.bulkDone": "Users in group (matched): {{count}}",
+  "subscriptionTraffic.bulkError": "Bulk update failed"
 }

@@ -91,6 +91,7 @@ export const Filters: FC<FilterProps> = ({ ...props }) => {
           <InputGroup flex="1" minW={0}>
             <InputLeftElement pointerEvents="none" children={<SearchIcon />} />
             <Input
+              size="md"
               placeholder={t("search")}
               value={search}
               borderColor="light-border"
@@ -116,7 +117,7 @@ export const Filters: FC<FilterProps> = ({ ...props }) => {
             <Button
               type="button"
               flexShrink={0}
-              size="sm"
+              size="md"
               variant="outline"
               bg="white"
               color="gray.800"
@@ -150,7 +151,7 @@ export const Filters: FC<FilterProps> = ({ ...props }) => {
             aria-label="refresh users"
             disabled={loading}
             onClick={refetchUsers}
-            size="sm"
+            size="md"
             variant="outline"
           >
             <ReloadIcon
@@ -162,7 +163,7 @@ export const Filters: FC<FilterProps> = ({ ...props }) => {
           <Button
             type="button"
             colorScheme="primary"
-            size="sm"
+            size="md"
             onClick={() => onCreateUser(true)}
             px={5}
           >

@@ -207,5 +207,15 @@
   "subscriptionTraffic.loading": "Загрузка…",
   "subscriptionTraffic.saved": "Настройки сохранены",
   "subscriptionTraffic.saveError": "Не удалось сохранить",
-  "subscriptionTraffic.loadError": "Не удалось загрузить"
+  "subscriptionTraffic.loadError": "Не удалось загрузить",
+  "subscriptionTraffic.bulkTitle": "Массовое изменение в БД по группе подписки",
+  "subscriptionTraffic.bulkScopeHint": "Активная вкладка: {{group}} — действие применится ко всем пользователям этой группы.",
+  "subscriptionTraffic.bulkFieldHint": "Дни: прибавляются к дате окончания (Unix), только если срок уже задан. ГиБ: к лимиту трафика (data_limit), только если лимит числовой; безлимит (пусто) не трогаем. Можно отрицательные значения; лимит не ниже 0.",
+  "subscriptionTraffic.bulkDays": "Дней ±",
+  "subscriptionTraffic.bulkGb": "ГиБ ±",
+  "subscriptionTraffic.bulkApply": "Применить к группе",
+  "subscriptionTraffic.bulkNeedChange": "Укажите ненулевые дни и/или ГиБ.",
+  "subscriptionTraffic.bulkConfirm": "Записать в БД для всех пользователей группы «{{group}}»?",
+  "subscriptionTraffic.bulkDone": "Пользователей в группе (учтено): {{count}}",
+  "subscriptionTraffic.bulkError": "Не удалось выполнить массовое изменение"
 }

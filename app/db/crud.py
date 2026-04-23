@@ -1678,3 +1678,32 @@ def update_subscription_traffic_settings(
     db.commit()
     db.refresh(sys)
     return get_subscription_traffic_settings(db)
+
+
+def bulk_adjust_subscription_group_users(
+    db: Session,
+    *,
+    is_trial: bool,
+    add_expire_days: Optional[int] = None,
+    add_data_limit_bytes: Optional[int] = None,
+) -> int:
+    """
+    Adjust expire and/or data_limit for every user in the trial or paid (non-trial) group.
+    Only rows with non-null expire / data_limit are updated for the respective field.
+    """
+    flt = (User.is_trial == is_trial,)
+    matched = db.query(User).filter(*flt).count()
+    if add_expire_days is not None and add_expire_days != 0:
+        delta = int(add_expire_days) * 86400
+        db.query(User).filter(*flt, User.expire.isnot(None)).update(
+            {User.expire: User.expire + delta},
+            synchronize_session=False,
+        )
+    if add_data_limit_bytes is not None and add_data_limit_bytes != 0:
+        b = int(add_data_limit_bytes)
+        db.query(User).filter(*flt, User.data_limit.isnot(None)).update(
+            {User.data_limit: func.greatest(0, User.data_limit + b)},
+            synchronize_session=False,
+        )
+    db.commit()
+    return matched

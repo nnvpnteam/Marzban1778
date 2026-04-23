@@ -1,6 +1,6 @@
-from typing import List, Optional
+from typing import List, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 def _normalize_metered_list(v):
@@ -54,3 +54,25 @@ class SubscriptionTrafficSettingsModify(BaseModel):
 
 class SubscriptionTrafficSettingsResponse(SubscriptionTrafficSettings):
     model_config = ConfigDict(from_attributes=True)
+
+
+class SubscriptionTrafficGroupBulk(BaseModel):
+    """Sudo-only bulk adjust for all users in trial or paid subscription group."""
+
+    group: Literal["trial", "paid"]
+    add_expire_days: Optional[int] = None
+    add_data_limit_gb: Optional[float] = None
+
+    @model_validator(mode="after")
+    def at_least_one_change(self):
+        d = self.add_expire_days
+        g = self.add_data_limit_gb
+        has_d = d is not None and d != 0
+        has_g = g is not None and g != 0
+        if not has_d and not has_g:
+            raise ValueError("Specify non-zero add_expire_days and/or add_data_limit_gb")
+        return self
+
+
+class SubscriptionTrafficGroupBulkResult(BaseModel):
+    matched_users: int

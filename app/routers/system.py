@@ -7,6 +7,8 @@ from app.db import Session, crud, get_db
 from app.models.admin import Admin
 from app.models.proxy import ProxyHost, ProxyInbound, ProxyTypes
 from app.models.subscription_traffic import (
+    SubscriptionTrafficGroupBulk,
+    SubscriptionTrafficGroupBulkResult,
     SubscriptionTrafficSettingsModify,
     SubscriptionTrafficSettingsResponse,
 )
@@ -95,6 +97,35 @@ def put_subscription_traffic_settings(
     """Update metered node pools (sudo only)."""
     _ = admin
     return crud.update_subscription_traffic_settings(db, payload)
+
+
+@router.post(
+    "/subscription_traffic_group_bulk",
+    response_model=SubscriptionTrafficGroupBulkResult,
+    responses={400: responses._400, 403: responses._403},
+)
+def post_subscription_traffic_group_bulk(
+    payload: SubscriptionTrafficGroupBulk,
+    db: Session = Depends(get_db),
+    admin: Admin = Depends(Admin.check_sudo_admin),
+):
+    """
+    Bulk add/remove calendar days on expire and/or GiB on data_limit for all users
+    in the trial or paid subscription group. Unlimited users (null data_limit) are
+    unchanged for the limit field; users without expire are unchanged for dates.
+    """
+    _ = admin
+    is_trial = payload.group == "trial"
+    bytes_delta = None
+    if payload.add_data_limit_gb is not None and payload.add_data_limit_gb != 0:
+        bytes_delta = int(round(float(payload.add_data_limit_gb) * 1024 * 1024 * 1024))
+    n = crud.bulk_adjust_subscription_group_users(
+        db,
+        is_trial=is_trial,
+        add_expire_days=payload.add_expire_days,
+        add_data_limit_bytes=bytes_delta,
+    )
+    return SubscriptionTrafficGroupBulkResult(matched_users=n)
 
 
 @router.get("/inbounds", response_model=Dict[ProxyTypes, List[ProxyInbound]])
