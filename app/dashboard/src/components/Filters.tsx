@@ -11,9 +11,11 @@ import {
   InputLeftElement,
   InputRightElement,
   Spinner,
+  Tooltip,
 } from "@chakra-ui/react";
 import {
   ArrowPathIcon,
+  Cog6ToothIcon,
   MagnifyingGlassIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
@@ -22,6 +24,8 @@ import { useDashboard } from "contexts/DashboardContext";
 import debounce from "lodash.debounce";
 import React, { FC, useState } from "react";
 import { useTranslation } from "react-i18next";
+import useGetUser from "hooks/useGetUser";
+import { SubscriptionTrafficSettingsModal } from "./SubscriptionTrafficSettingsModal";
 
 const iconProps = {
   baseStyle: {
@@ -33,6 +37,9 @@ const iconProps = {
 const SearchIcon = chakra(MagnifyingGlassIcon, iconProps);
 const ClearIcon = chakra(XMarkIcon, iconProps);
 export const ReloadIcon = chakra(ArrowPathIcon, iconProps);
+const PoolSettingsIcon = chakra(Cog6ToothIcon, {
+  baseStyle: { w: 4, h: 4 },
+});
 
 export type FilterProps = {} & BoxProps;
 const setSearchField = debounce((search: string) => {
@@ -47,7 +54,9 @@ export const Filters: FC<FilterProps> = ({ ...props }) => {
   const { loading, filters, onFilterChange, refetchUsers, onCreateUser } =
     useDashboard();
   const { t } = useTranslation();
+  const { userData } = useGetUser();
   const [search, setSearch] = useState("");
+  const [poolSettingsOpen, setPoolSettingsOpen] = useState(false);
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
     setSearchField(e.target.value);
@@ -61,6 +70,7 @@ export const Filters: FC<FilterProps> = ({ ...props }) => {
     });
   };
   return (
+    <>
     <Grid
       id="filters"
       templateColumns={{
@@ -122,6 +132,26 @@ export const Filters: FC<FilterProps> = ({ ...props }) => {
               })}
             />
           </IconButton>
+          {userData.is_sudo && (
+            <Tooltip
+              label={t("filters.subscriptionTrafficPools")}
+              placement="bottom"
+            >
+              <IconButton
+                aria-label={t("filters.subscriptionTrafficPools")}
+                size="sm"
+                onClick={() => setPoolSettingsOpen(true)}
+                bg="black"
+                color="white"
+                borderRadius="md"
+                minW="36px"
+                _hover={{ bg: "gray.800" }}
+                _active={{ bg: "gray.900" }}
+              >
+                <PoolSettingsIcon />
+              </IconButton>
+            </Tooltip>
+          )}
           <Button
             colorScheme="primary"
             size="sm"
@@ -133,5 +163,10 @@ export const Filters: FC<FilterProps> = ({ ...props }) => {
         </HStack>
       </GridItem>
     </Grid>
+    <SubscriptionTrafficSettingsModal
+      isOpen={poolSettingsOpen}
+      onClose={() => setPoolSettingsOpen(false)}
+    />
+    </>
   );
 };

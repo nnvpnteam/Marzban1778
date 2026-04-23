@@ -195,7 +195,7 @@
   "usersTable.trialBadge": "Пробная",
   "usersTable.paidBadge": "Оплач.",
   "userDialog.trialSubscription": "Пробная подписка",
-  "userDialog.subscriptionTrafficSettings": "Пулы узлов (трафик)",
+  "filters.subscriptionTrafficPools": "Пулы узлов для пробной и оплаченной подписки",
   "subscriptionTraffic.title": "Трафик подписки (пробная / оплаченная)",
   "subscriptionTraffic.hint": "Нажмите узел, чтобы включить его в лимитный пул для этого типа подписки. Узлы вне пула не расходуют персональный лимит пользователя. Лимит трафика задаётся у каждого пользователя отдельно.",
   "subscriptionTraffic.tabTrial": "Пробная",
