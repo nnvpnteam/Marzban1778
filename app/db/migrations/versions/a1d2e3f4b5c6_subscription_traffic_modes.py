@@ -52,25 +52,42 @@ def upgrade() -> None:
                 server_default="0",
             ),
         )
+    # MySQL rejects DEFAULT on JSON columns; add nullable, backfill, then NOT NULL.
     if not _has_column(bind, "system", "trial_metered_node_ids"):
         op.add_column(
             "system",
-            sa.Column(
-                "trial_metered_node_ids",
-                sa.JSON(),
-                nullable=False,
-                server_default=sa.text("'[]'"),
-            ),
+            sa.Column("trial_metered_node_ids", sa.JSON(), nullable=True),
         )
     if not _has_column(bind, "system", "paid_metered_node_ids"):
         op.add_column(
             "system",
-            sa.Column(
-                "paid_metered_node_ids",
-                sa.JSON(),
-                nullable=False,
-                server_default=sa.text("'[]'"),
-            ),
+            sa.Column("paid_metered_node_ids", sa.JSON(), nullable=True),
+        )
+    if _has_column(bind, "system", "trial_metered_node_ids"):
+        op.execute(
+            sa.text(
+                "UPDATE system SET trial_metered_node_ids = CAST('[]' AS JSON) "
+                "WHERE trial_metered_node_ids IS NULL"
+            )
+        )
+        op.alter_column(
+            "system",
+            "trial_metered_node_ids",
+            existing_type=sa.JSON(),
+            nullable=False,
+        )
+    if _has_column(bind, "system", "paid_metered_node_ids"):
+        op.execute(
+            sa.text(
+                "UPDATE system SET paid_metered_node_ids = CAST('[]' AS JSON) "
+                "WHERE paid_metered_node_ids IS NULL"
+            )
+        )
+        op.alter_column(
+            "system",
+            "paid_metered_node_ids",
+            existing_type=sa.JSON(),
+            nullable=False,
         )
 
 
