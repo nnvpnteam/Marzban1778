@@ -247,10 +247,18 @@ const getDeviceVisualMeta = (
   const androidHint = hintedPlatform.includes("android");
   const explicitIos = explicitPlatform.includes("ios") || explicitPlatform.includes("iphone") || explicitPlatform.includes("ipad");
   const explicitAndroid = explicitPlatform.includes("android");
+  const explicitWindows = explicitPlatform.includes("windows");
+  const explicitMac = explicitPlatform.includes("mac");
+  const explicitLinux = explicitPlatform.includes("linux");
   const hasRawIos = raw.includes("iphone") || raw.includes("ios") || raw.includes("ipad");
   const hasRawAndroid = raw.includes("android");
+  const hasRawWindows = raw.includes("windows");
+  const hasRawMac = raw.includes("macintosh") || raw.includes("mac os");
+  const hasRawLinux = raw.includes("linux") || raw.includes("x11");
   const hasAndroidEvidence = explicitAndroid || androidHint || hasRawAndroid;
   const hasIosEvidence = explicitIos || iosHint || hasRawIos;
+  const hasDesktopEvidence =
+    explicitWindows || explicitMac || explicitLinux || hasRawWindows || hasRawMac || hasRawLinux;
   const appName =
     ua.split("/")[0]?.trim() ||
     ua.split(/\s+/)[0]?.trim() ||
@@ -330,17 +338,22 @@ const getDeviceVisualMeta = (
       colorScheme: "orange",
     };
   }
-  if (
-    raw.includes("windows") ||
-    raw.includes("macintosh") ||
-    raw.includes("linux") ||
-    raw.includes("x11")
-  ) {
+  if (hasDesktopEvidence) {
+    const platformBadge = explicitMac || hasRawMac
+      ? "macOS"
+      : explicitWindows || hasRawWindows
+        ? "Windows"
+        : "Linux";
+    const versionPart = explicitOs ? ` ${explicitOs}` : "";
+    const modelPart = explicitModel ? `${explicitModel}` : "";
+    const explicitDetail = modelPart
+      ? `${modelPart}${versionPart ? ` · ${platformBadge}${versionPart}` : ""}`
+      : `${platformBadge}${versionPart}`;
     return {
       platform: "desktop",
       appName,
-      platformBadge: raw.includes("macintosh") ? "macOS" : raw.includes("windows") ? "Windows" : "Linux",
-      deviceDetail: pickDesktopDetail(ua),
+      platformBadge,
+      deviceDetail: explicitPlatform || explicitModel || explicitOs ? explicitDetail : pickDesktopDetail(ua),
       colorScheme: "blue",
     };
   }
