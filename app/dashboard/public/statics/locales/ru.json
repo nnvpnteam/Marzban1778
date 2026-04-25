@@ -183,6 +183,7 @@
   "username": "Имя пользователя",
   "users": "Пользователи",
   "totalUsers": "Пользователи",
+  "paidUsers": "Платные пользователи",
   "usersTable.copied": "Скопировано",
   "usersTable.copyConfigs": "Скопировать конфигурации",
   "usersTable.copyLink": "Скопировать ссылку на подписку",

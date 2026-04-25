@@ -31,6 +31,11 @@ def get_system_stats(
     dbadmin: Union[Admin, None] = crud.get_admin(db, admin.username)
 
     total_user = crud.get_users_count(db, admin=dbadmin if not admin.is_sudo else None)
+    paid_users = crud.get_users_count(
+        db,
+        admin=dbadmin if not admin.is_sudo else None,
+        is_trial=False,
+    )
     users_active = crud.get_users_count(
         db, status=UserStatus.active, admin=dbadmin if not admin.is_sudo else None
     )
@@ -58,6 +63,7 @@ def get_system_stats(
         cpu_cores=cpu.cores,
         cpu_usage=cpu.percent,
         total_user=total_user,
+        paid_users=paid_users,
         online_users=online_users,
         users_active=users_active,
         users_disabled=users_disabled,

@@ -8,6 +8,7 @@ class SystemStats(BaseModel):
     cpu_cores: int
     cpu_usage: float
     total_user: int
+    paid_users: int
     online_users: int
     users_active: int
     users_on_hold: int

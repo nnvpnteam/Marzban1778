@@ -183,6 +183,7 @@
   "username": "Username",
   "users": "Users",
   "totalUsers": "users",
+  "paidUsers": "paid users",
   "usersTable.copied": "Copied",
   "usersTable.copyConfigs": "Copy Configs",
   "usersTable.copyLink": "Copy Subscription Link",
@@ -220,3 +221,4 @@
   "subscriptionTraffic.bulkDone": "Matched: {{count}}",
   "subscriptionTraffic.bulkError": "Bulk update failed"
 }
+

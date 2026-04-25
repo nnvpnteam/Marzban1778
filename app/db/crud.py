@@ -359,7 +359,12 @@ def get_user_usages(db: Session, dbuser: User, start: datetime, end: datetime) -
     return list(usages.values())
 
 
-def get_users_count(db: Session, status: UserStatus = None, admin: Admin = None) -> int:
+def get_users_count(
+    db: Session,
+    status: UserStatus = None,
+    admin: Admin = None,
+    is_trial: Optional[bool] = None,
+) -> int:
     """
     Retrieves the count of users based on status and admin filters.
 
@@ -376,6 +381,8 @@ def get_users_count(db: Session, status: UserStatus = None, admin: Admin = None)
         query = query.filter(User.admin == admin)
     if status:
         query = query.filter(User.status == status)
+    if is_trial is not None:
+        query = query.filter(User.is_trial.is_(is_trial))
     return query.count()
 
 

@@ -1,10 +1,9 @@
 import { Box, BoxProps, Card, chakra, HStack, Text } from "@chakra-ui/react";
 import {
+  BanknotesIcon,
   ChartBarIcon,
-  ChartPieIcon,
   SignalIcon,
   UserGroupIcon,
-  UsersIcon,
 } from "@heroicons/react/24/outline";
 import { useDashboard } from "contexts/DashboardContext";
 import { FC, PropsWithChildren, ReactElement, ReactNode } from "react";
@@ -12,15 +11,6 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "react-query";
 import { fetch } from "service/http";
 import { formatBytes, numberWithCommas } from "utils/formatByte";
-
-const TotalUsersIcon = chakra(UsersIcon, {
-  baseStyle: {
-    w: 5,
-    h: 5,
-    position: "relative",
-    zIndex: "2",
-  },
-});
 
 const RegisteredUsersIcon = chakra(UserGroupIcon, {
   baseStyle: {
@@ -40,7 +30,7 @@ const OnlineUsersIcon = chakra(SignalIcon, {
   },
 });
 
-const NetworkIcon = chakra(ChartBarIcon, {
+const PaidUsersIcon = chakra(BanknotesIcon, {
   baseStyle: {
     w: 5,
     h: 5,
@@ -49,7 +39,7 @@ const NetworkIcon = chakra(ChartBarIcon, {
   },
 });
 
-const MemoryIcon = chakra(ChartPieIcon, {
+const NetworkIcon = chakra(ChartBarIcon, {
   baseStyle: {
     w: 5,
     h: 5,
@@ -62,12 +52,14 @@ type StatisticCardProps = {
   title: string;
   content: ReactNode;
   icon: ReactElement;
+  accentColor?: string;
 };
 
 const StatisticCard: FC<PropsWithChildren<StatisticCardProps>> = ({
   title,
   content,
   icon,
+  accentColor = "primary.400",
 }) => {
   return (
     <Card
@@ -94,7 +86,7 @@ const StatisticCard: FC<PropsWithChildren<StatisticCardProps>> = ({
             position: "absolute",
             top: 0,
             left: 0,
-            bg: "primary.400",
+            bg: accentColor,
             display: "block",
             w: "full",
             h: "full",
@@ -107,7 +99,7 @@ const StatisticCard: FC<PropsWithChildren<StatisticCardProps>> = ({
             position: "absolute",
             top: "-5px",
             left: "-5px",
-            bg: "primary.400",
+            bg: accentColor,
             display: "block",
             w: "calc(100% + 10px)",
             h: "calc(100% + 10px)",
@@ -191,9 +183,15 @@ export const Statistics: FC<BoxProps> = (props) => {
         icon={<RegisteredUsersIcon />}
       />
       <StatisticCard
+        title={t("paidUsers")}
+        content={systemData && <Text>{numberWithCommas(systemData.paid_users)}</Text>}
+        icon={<PaidUsersIcon />}
+      />
+      <StatisticCard
         title={t("activeNow")}
         content={systemData && <Text>{numberWithCommas(systemData.online_users)}</Text>}
         icon={<OnlineUsersIcon />}
+        accentColor="#749AEC"
       />
       <StatisticCard
         title={t("dataUsage")}
@@ -204,27 +202,6 @@ export const Statistics: FC<BoxProps> = (props) => {
           )
         }
         icon={<NetworkIcon />}
-      />
-      <StatisticCard
-        title={t("memoryUsage")}
-        content={
-          systemData && (
-            <HStack alignItems="flex-end">
-              <Text>{formatBytes(systemData.mem_used, 1, true)[0]}</Text>
-              <Text
-                fontWeight="normal"
-                fontSize="lg"
-                as="span"
-                display="inline-block"
-                pb="5px"
-              >
-                {formatBytes(systemData.mem_used, 1, true)[1]} /{" "}
-                {formatBytes(systemData.mem_total, 1)}
-              </Text>
-            </HStack>
-          )
-        }
-        icon={<MemoryIcon />}
       />
     </HStack>
   );

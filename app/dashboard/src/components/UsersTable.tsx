@@ -697,10 +697,6 @@ const SubscriptionTrialLabel: FC<{ user: User }> = ({ user }) => {
   return (
     <Text
       as="span"
-      display="inline-flex"
-      alignItems="center"
-      minH="22px"
-      lineHeight={1}
       fontSize="xs"
       fontWeight="semibold"
       whiteSpace="nowrap"
@@ -733,25 +729,21 @@ const SubscriptionDevicesLabel: FC<{ user: User }> = ({ user }) => {
   return (
     <Text
       as="span"
-      display="inline-flex"
-      alignItems="center"
-      minH="22px"
-      lineHeight={1}
       fontSize="xs"
       fontWeight="semibold"
       whiteSpace="nowrap"
       px={2}
       py={0.5}
       borderRadius="md"
-      bg="primary.500"
+      bg="#749AEC"
       color="white"
       borderWidth="1px"
-      borderColor="primary.600"
+      borderColor="#678ad3"
       flexShrink={0}
       _dark={{
-        bg: "primary.500",
+        bg: "#749AEC",
         color: "white",
-        borderColor: "primary.400",
+        borderColor: "#89adf1",
       }}
     >
       Devices {deviceCount}/{limitLabel}
