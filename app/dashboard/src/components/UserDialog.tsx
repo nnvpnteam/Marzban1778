@@ -245,20 +245,39 @@ const getDeviceVisualMeta = (
   const iosHint =
     hintedPlatform.includes("ios") || hintedPlatform.includes("iphone") || hintedPlatform.includes("ipad");
   const androidHint = hintedPlatform.includes("android");
+  const explicitIos = explicitPlatform.includes("ios") || explicitPlatform.includes("iphone") || explicitPlatform.includes("ipad");
+  const explicitAndroid = explicitPlatform.includes("android");
+  const hasRawIos = raw.includes("iphone") || raw.includes("ios") || raw.includes("ipad");
+  const hasRawAndroid = raw.includes("android");
+  const hasAndroidEvidence =
+    explicitAndroid || androidHint || hasRawAndroid || !!hintedModel || !!explicitModel;
+  const hasIosEvidence = explicitIos || iosHint || hasRawIos;
   const appName =
     ua.split("/")[0]?.trim() ||
     ua.split(/\s+/)[0]?.trim() ||
     "Unknown app";
 
-  if (
-    raw.includes("iphone") ||
-    raw.includes("ios") ||
-    raw.includes("ipad") ||
-    iosHint ||
-    explicitPlatform.includes("ios") ||
-    explicitPlatform.includes("iphone") ||
-    explicitPlatform.includes("ipad")
-  ) {
+  // Prefer Android when evidence conflicts (e.g. generic/incorrect iOS hint with Android UA).
+  if (hasAndroidEvidence && !hasIosEvidence) {
+    const hinted = [hintedBrand, hintedModel].filter(Boolean).join(" ").trim();
+    const model = sanitizeAndroidModel(
+      explicitModel || hinted || pickAndroidModel(ua) || pickAndroidModelFallback(ua)
+    );
+    const ver = explicitOs || ua.match(/Android\s+([\d.]+)/i)?.[1];
+    const deviceDetail =
+      model && ver
+        ? `${model} · Android ${ver}`
+        : model || (ver ? `Android ${ver}` : "Android device");
+    return {
+      platform: "android",
+      appName,
+      platformBadge: "Android",
+      deviceDetail,
+      colorScheme: "green",
+    };
+  }
+
+  if (hasIosEvidence && !hasAndroidEvidence) {
     const isPad = raw.includes("ipad");
     const platformBadge = isPad ? "iPadOS" : "iOS";
     const hw = ua.match(/\b(iPhone\d+,\d+|iPad\d+,\d+|iPod\d+,\d+)\b/i);
@@ -281,13 +300,9 @@ const getDeviceVisualMeta = (
       colorScheme: "orange",
     };
   }
-  if (
-    raw.includes("android") ||
-    androidHint ||
-    !!hintedModel ||
-    explicitPlatform.includes("android") ||
-    !!explicitModel
-  ) {
+
+  // Conflict case: if both detected, trust explicit/UA Android first.
+  if (hasAndroidEvidence) {
     const hinted = [hintedBrand, hintedModel].filter(Boolean).join(" ").trim();
     const model = sanitizeAndroidModel(
       explicitModel || hinted || pickAndroidModel(ua) || pickAndroidModelFallback(ua)
@@ -303,6 +318,17 @@ const getDeviceVisualMeta = (
       platformBadge: "Android",
       deviceDetail,
       colorScheme: "green",
+    };
+  }
+  if (hasIosEvidence) {
+    const iosVer = pickIosVersion(ua) || explicitOs || undefined;
+    const model = explicitModel || "iPhone";
+    return {
+      platform: "iphone",
+      appName,
+      platformBadge: "iOS",
+      deviceDetail: iosVer ? `${model} · iOS ${iosVer}` : model,
+      colorScheme: "orange",
     };
   }
   if (
