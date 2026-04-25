@@ -206,7 +206,6 @@ export const Statistics: FC<BoxProps> = (props) => {
         title={t("activeNow")}
         content={systemData && <Text>{numberWithCommas(systemData.online_users)}</Text>}
         icon={<OnlineUsersIcon />}
-        accentColor="#4165B3"
       />
       <StatisticCard
         title={t("dataUsage")}
