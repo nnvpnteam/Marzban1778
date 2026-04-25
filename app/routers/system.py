@@ -33,6 +33,7 @@ def get_system_stats(
     total_user = crud.get_users_count(db, admin=dbadmin if not admin.is_sudo else None)
     paid_users = crud.get_users_count(
         db,
+        status=UserStatus.active,
         admin=dbadmin if not admin.is_sudo else None,
         is_trial=False,
     )
