@@ -228,17 +228,22 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
   const [selectedRow, setSelectedRow] = useState<ExpandedIndex | undefined>(
     undefined
   );
-  const marginTop = useBreakpointValue({ base: 120, lg: 72 }) || 72;
+  const marginTop = useBreakpointValue({ base: 200, md: 140, lg: 88 }) || 88;
   const [top, setTop] = useState(`${marginTop}px`);
   const useTable = useBreakpointValue({ base: false, md: true });
 
   useEffect(() => {
     const calcTop = () => {
-      const el = document.querySelectorAll("#filters")[0] as HTMLElement;
-      setTop(`${el.offsetHeight}px`);
+      const el = document.querySelector("#filters") as HTMLElement | null;
+      if (el) setTop(`${el.offsetHeight}px`);
     };
+    calcTop();
     window.addEventListener("scroll", calcTop);
-    () => window.removeEventListener("scroll", calcTop);
+    window.addEventListener("resize", calcTop);
+    return () => {
+      window.removeEventListener("scroll", calcTop);
+      window.removeEventListener("resize", calcTop);
+    };
   }, []);
 
   const isFiltered = users.length !== totalUsers.total;
@@ -380,16 +385,27 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                         minW="100px"
                         pl={4}
                         pr={4}
-                        maxW="calc(100vw - 50px - 32px - 100px - 48px)"
+                        maxW="calc(100vw - 2rem)"
                       >
-                        <div className="flex-status">
-                          <OnlineBadge lastOnline={user.online_at} />
-                          <Text isTruncated>{user.username}</Text>
-                          <HStack spacing={1} flexShrink={0}>
+                        <HStack
+                          align="flex-start"
+                          spacing={2}
+                          flexWrap="wrap"
+                          rowGap={1}
+                          minW={0}
+                          w="full"
+                        >
+                          <HStack spacing={2} minW={0} flex="1 1 140px">
+                            <OnlineBadge lastOnline={user.online_at} />
+                            <Text isTruncated minW={0}>
+                              {user.username}
+                            </Text>
+                          </HStack>
+                          <HStack spacing={1} flexShrink={0} flexWrap="wrap">
                             <SubscriptionDevicesLabel user={user} />
                             <SubscriptionTrialLabel user={user} />
                           </HStack>
-                        </div>
+                        </HStack>
                       </Td>
                       <Td borderBottom={0} minW="50px" pl={0} pr={0}>
                         <StatusBadge
@@ -459,7 +475,7 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                                 >
                                   {t("usersTable.dataUsage")}
                                 </Text>
-                                <Box width="full" minW="230px">
+                                <Box width="full" minW={0}>
                                   <UsageSlider
                                     totalUsedTraffic={
                                       user.lifetime_used_traffic
@@ -636,15 +652,23 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
                   onClick={() => onEditingUser(user)}
                 >
                   <Td minW="140px">
-                    <div className="flex-status">
+                    <HStack
+                      align="center"
+                      spacing={2}
+                      flexWrap="wrap"
+                      rowGap={1}
+                      minW={0}
+                    >
                       <OnlineBadge lastOnline={user.online_at} />
-                      {user.username}
-                      <HStack spacing={1} flexShrink={0}>
+                      <Text as="span" fontWeight="medium">
+                        {user.username}
+                      </Text>
+                      <HStack spacing={1} flexShrink={0} flexWrap="wrap">
                         <SubscriptionDevicesLabel user={user} />
                         <SubscriptionTrialLabel user={user} />
                       </HStack>
                       <OnlineStatus lastOnline={user.online_at} />
-                    </div>
+                    </HStack>
                   </Td>
                   <Td width="400px" minW="150px">
                     <StatusBadge
@@ -705,13 +729,10 @@ const SubscriptionTrialLabel: FC<{ user: User }> = ({ user }) => {
       borderRadius="md"
       bg={trial ? "orange.500" : "green.500"}
       color="white"
-      borderWidth="1px"
-      borderColor={trial ? "orange.600" : "green.600"}
       flexShrink={0}
       _dark={{
         bg: trial ? "orange.500" : "green.500",
         color: "white",
-        borderColor: trial ? "orange.400" : "green.400",
       }}
     >
       {trial ? t("usersTable.trialBadge") : t("usersTable.paidBadge")}
@@ -737,13 +758,10 @@ const SubscriptionDevicesLabel: FC<{ user: User }> = ({ user }) => {
       borderRadius="md"
       bg="#4165B3"
       color="white"
-      borderWidth="1px"
-      borderColor="#355286"
       flexShrink={0}
       _dark={{
         bg: "#4165B3",
         color: "white",
-        borderColor: "#5a7fc7",
       }}
     >
       Devices {deviceCount}/{limitLabel}

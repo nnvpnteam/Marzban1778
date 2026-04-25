@@ -1,4 +1,4 @@
-import { BoxProps, HStack, Link, Text } from "@chakra-ui/react";
+import { BoxProps, Flex, Link, Text } from "@chakra-ui/react";
 import { ORGANIZATION_URL, REPO_URL } from "constants/Project";
 import { useDashboard } from "contexts/DashboardContext";
 import { FC } from "react";
@@ -9,13 +9,22 @@ export const Footer: FC<BoxProps> = (props) => {
     (import.meta.env.VITE_COMMIT_SHA as string | undefined)?.trim() || "";
   const shortCommit = commit ? commit.slice(0, 8) : "";
   return (
-    <HStack w="full" py="0" position="relative" {...props}>
+    <Flex
+      w="full"
+      py={2}
+      position="relative"
+      flexDirection={{ base: "column", md: "row" }}
+      align={{ base: "stretch", md: "center" }}
+      gap={{ base: 1, md: 0 }}
+      {...props}
+    >
       <Text
         display="inline-block"
         flexGrow={1}
-        textAlign="center"
+        textAlign={{ base: "left", md: "center" }}
         color="gray.500"
         fontSize="xs"
+        pr={{ base: 0, md: shortCommit ? 24 : 0 }}
       >
         <Link color="blue.400" href={REPO_URL}>
           Marzban
@@ -28,9 +37,10 @@ export const Footer: FC<BoxProps> = (props) => {
       </Text>
       {shortCommit && (
         <Text
-          position="absolute"
-          right={0}
-          bottom={0}
+          position={{ base: "static", md: "absolute" }}
+          right={{ md: 0 }}
+          bottom={{ md: 0 }}
+          alignSelf={{ base: "flex-end", md: "auto" }}
           color="gray.500"
           fontSize="xs"
           opacity={0.9}
@@ -39,6 +49,6 @@ export const Footer: FC<BoxProps> = (props) => {
           {shortCommit}
         </Text>
       )}
-    </HStack>
+    </Flex>
   );
 };

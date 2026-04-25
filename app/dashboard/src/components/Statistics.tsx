@@ -1,4 +1,12 @@
-import { Box, BoxProps, Card, chakra, HStack, Text } from "@chakra-ui/react";
+import {
+  Box,
+  BoxProps,
+  Card,
+  chakra,
+  HStack,
+  SimpleGrid,
+  Text,
+} from "@chakra-ui/react";
 import {
   BanknotesIcon,
   ChartBarIcon,
@@ -14,8 +22,8 @@ import { formatBytes, numberWithCommas } from "utils/formatByte";
 
 const RegisteredUsersIcon = chakra(UserGroupIcon, {
   baseStyle: {
-    w: 5,
-    h: 5,
+    w: { base: 4, md: 5 },
+    h: { base: 4, md: 5 },
     position: "relative",
     zIndex: "2",
   },
@@ -23,8 +31,8 @@ const RegisteredUsersIcon = chakra(UserGroupIcon, {
 
 const OnlineUsersIcon = chakra(SignalIcon, {
   baseStyle: {
-    w: 5,
-    h: 5,
+    w: { base: 4, md: 5 },
+    h: { base: 4, md: 5 },
     position: "relative",
     zIndex: "2",
   },
@@ -32,8 +40,8 @@ const OnlineUsersIcon = chakra(SignalIcon, {
 
 const PaidUsersIcon = chakra(BanknotesIcon, {
   baseStyle: {
-    w: 5,
-    h: 5,
+    w: { base: 4, md: 5 },
+    h: { base: 4, md: 5 },
     position: "relative",
     zIndex: "2",
   },
@@ -41,8 +49,8 @@ const PaidUsersIcon = chakra(BanknotesIcon, {
 
 const NetworkIcon = chakra(ChartBarIcon, {
   baseStyle: {
-    w: 5,
-    h: 5,
+    w: { base: 4, md: 5 },
+    h: { base: 4, md: 5 },
     position: "relative",
     zIndex: "2",
   },
@@ -63,22 +71,23 @@ const StatisticCard: FC<PropsWithChildren<StatisticCardProps>> = ({
 }) => {
   return (
     <Card
-      p={6}
+      p={{ base: 3, sm: 4, md: 6 }}
       borderWidth="1px"
       borderColor="light-border"
       bg="#F9FAFB"
       _dark={{ borderColor: "gray.600", bg: "gray.750" }}
       borderStyle="solid"
       boxShadow="none"
-      borderRadius="12px"
+      borderRadius={{ base: "10px", md: "12px" }}
       width="full"
       display="flex"
       justifyContent="space-between"
       flexDirection="row"
+      minW={0}
     >
-      <HStack alignItems="center" columnGap="4">
+      <HStack alignItems="center" columnGap={{ base: 2, md: 4 }} minW={0}>
         <Box
-          p="2"
+          p={{ base: "1.5", md: "2" }}
           position="relative"
           color="white"
           _before={{
@@ -117,12 +126,21 @@ const StatisticCard: FC<PropsWithChildren<StatisticCardProps>> = ({
           }}
           fontWeight="medium"
           textTransform="capitalize"
-          fontSize="sm"
+          fontSize={{ base: "10px", sm: "xs", md: "sm" }}
+          noOfLines={2}
+          lineHeight="short"
         >
           {title}
         </Text>
       </HStack>
-      <Box fontSize="3xl" fontWeight="semibold" mt="2">
+      <Box
+        fontSize={{ base: "xl", sm: "2xl", md: "3xl" }}
+        fontWeight="semibold"
+        mt={{ base: 0, md: 2 }}
+        flexShrink={0}
+        textAlign="right"
+        minW={0}
+      >
         {content}
       </Box>
     </Card>
@@ -142,13 +160,10 @@ export const Statistics: FC<BoxProps> = (props) => {
   });
   const { t } = useTranslation();
   return (
-    <HStack
-      justifyContent="space-between"
-      gap={0}
-      columnGap={{ lg: 4, md: 0 }}
-      rowGap={{ lg: 0, base: 4 }}
-      display="flex"
-      flexDirection={{ lg: "row", base: "column" }}
+    <SimpleGrid
+      columns={{ base: 2, md: 2, xl: 4 }}
+      spacing={{ base: 2, md: 3, xl: 4 }}
+      w="full"
       {...props}
     >
       <StatisticCard
@@ -162,7 +177,7 @@ export const Statistics: FC<BoxProps> = (props) => {
               <Text
                 as="span"
                 fontWeight="normal"
-                fontSize="xl"
+                fontSize={{ base: "md", sm: "lg", md: "xl" }}
                 color="gray.500"
                 _dark={{ color: "gray.400" }}
               >
@@ -171,7 +186,7 @@ export const Statistics: FC<BoxProps> = (props) => {
               <Text
                 as="span"
                 fontWeight="normal"
-                fontSize="xl"
+                fontSize={{ base: "md", sm: "lg", md: "xl" }}
                 color="gray.500"
                 _dark={{ color: "gray.400" }}
               >
@@ -191,7 +206,7 @@ export const Statistics: FC<BoxProps> = (props) => {
         title={t("activeNow")}
         content={systemData && <Text>{numberWithCommas(systemData.online_users)}</Text>}
         icon={<OnlineUsersIcon />}
-        accentColor="#749AEC"
+        accentColor="#4165B3"
       />
       <StatisticCard
         title={t("dataUsage")}
@@ -203,6 +218,6 @@ export const Statistics: FC<BoxProps> = (props) => {
         }
         icon={<NetworkIcon />}
       />
-    </HStack>
+    </SimpleGrid>
   );
 };

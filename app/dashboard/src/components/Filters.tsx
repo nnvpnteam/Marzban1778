@@ -74,8 +74,8 @@ export const Filters: FC<FilterProps> = ({ ...props }) => {
       }}
       position="sticky"
       top={0}
-      mx="-6"
-      px="6"
+      mx={{ base: -3, sm: -4, md: -6 }}
+      px={{ base: 3, sm: 4, md: 6 }}
       rowGap={4}
       gap={{
         lg: 4,

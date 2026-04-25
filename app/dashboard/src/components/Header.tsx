@@ -120,7 +120,14 @@ export const Header: FC<HeaderProps> = ({ actions }) => {
       }}
       position="relative"
     >
-      <Text as="h1" fontWeight="semibold" fontSize="2xl">
+      <Text
+        as="h1"
+        fontWeight="semibold"
+        fontSize={{ base: "lg", sm: "xl", md: "2xl" }}
+        noOfLines={1}
+        minW={0}
+        pr={2}
+      >
         {t("users")}
       </Text>
       {showDonationNotif && (
@@ -228,7 +235,7 @@ export const Header: FC<HeaderProps> = ({ actions }) => {
 
           <Box
             css={{ direction: "ltr" }}
-            display="flex"
+            display={{ base: "none", sm: "flex" }}
             alignItems="center"
             pr="2"
             __css={{

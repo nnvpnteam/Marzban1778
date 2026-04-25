@@ -337,9 +337,19 @@ export const SubscriptionTrafficSettingsModal: FC<Props> = ({
       : t("subscriptionTraffic.tabPaid");
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      size={{ base: "full", md: "xl" }}
+      scrollBehavior="inside"
+    >
       <ModalOverlay />
-      <ModalContent mx={3}>
+      <ModalContent
+        mx={{ base: 0, md: 3 }}
+        my={{ base: 0, md: "auto" }}
+        borderRadius={{ base: 0, md: "md" }}
+        maxH={{ base: "100dvh", md: undefined }}
+      >
         <ModalHeader pr={10}>{t("subscriptionTraffic.title")}</ModalHeader>
         <ModalCloseButton />
         <ModalBody>

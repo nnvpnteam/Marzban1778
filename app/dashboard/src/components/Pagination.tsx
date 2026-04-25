@@ -6,6 +6,7 @@ import {
   HStack,
   Select,
   Text,
+  useBreakpointValue,
 } from "@chakra-ui/react";
 import {
   ArrowLongLeftIcon,
@@ -85,7 +86,8 @@ export const Pagination: FC = () => {
 
   const page = (offset || 0) / (perPage || 1);
   const noPages = Math.ceil(total / (perPage || 1));
-  const pages = generatePageItems(noPages, page, 7);
+  const pageWindow = useBreakpointValue({ base: 5, md: 7 }) ?? 7;
+  const pages = generatePageItems(noPages, page, pageWindow);
 
   const changePage = (page: number) => {
     onFilterChange({
@@ -133,7 +135,8 @@ export const Pagination: FC = () => {
         </HStack>
       </Box>
 
-      <ButtonGroup size="sm" isAttached variant="outline" order={{ base: 1, md: 2 }}>
+      <Box order={{ base: 1, md: 2 }} w={{ base: "full", md: "auto" }} overflowX="auto">
+      <ButtonGroup size="sm" isAttached variant="outline" minW="min-content">
         <Button
           leftIcon={<PrevIcon />}
           onClick={changePage.bind(null, page - 1)}
@@ -163,6 +166,7 @@ export const Pagination: FC = () => {
           {t("next")}
         </Button>
       </ButtonGroup>
+      </Box>
     </HStack>
   );
 };

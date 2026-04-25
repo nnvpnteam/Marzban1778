@@ -234,6 +234,9 @@ table thead {
 .pulse.green {
   animation: green-pulse-animation 3s infinite;
 }
+.pulse.online {
+  animation: online-pulse-animation 3s infinite;
+}
 .pulse.red{
   animation: red-pulse-animation 3s infinite;
 }
@@ -257,6 +260,15 @@ table thead {
 
   100% {
     box-shadow: 0 0 0 10px #66ff9900;
+  }
+}
+@keyframes online-pulse-animation {
+  0% {
+    box-shadow: 0 0 0 0px rgba(65, 101, 179, 0.45);
+  }
+
+  100% {
+    box-shadow: 0 0 0 10px rgba(65, 101, 179, 0);
   }
 }
 @keyframes red-pulse-animation {
@@ -283,4 +295,6 @@ table thead {
   align-items: center;
   justify-content: start;
   gap: .7rem;
+  flex-wrap: wrap;
+  min-width: 0;
 }

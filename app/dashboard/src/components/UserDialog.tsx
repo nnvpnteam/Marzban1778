@@ -1197,7 +1197,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
                         borderWidth="1px"
                         borderRadius="10px"
                         p={{ base: 2, md: 2 }}
-                        maxH="360px"
+                        maxH={{ base: "50vh", md: "360px" }}
                         overflowY="auto"
                         minW={0}
                       >
@@ -1263,8 +1263,8 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                             display="inline-flex"
                                             alignItems="center"
                                             justifyContent="center"
-                                            px={4}
-                                            py={1.5}
+                                            px={{ base: 2, md: 4 }}
+                                            py={{ base: 1, md: 1.5 }}
                                             borderRadius="md"
                                             bg={pillColors.bg}
                                             color={pillColors.fg}
