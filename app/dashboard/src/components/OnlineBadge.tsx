@@ -32,9 +32,9 @@ export const OnlineBadge: FC<UserStatusProps> = ({ lastOnline }) => {
   if (timeDifferenceInSeconds <= 60) {
     return (
       <Box
-        bg="#4165B3"
-        _dark={{ bg: "#5a7fc7" }}
-        className="circle pulse online"
+        bg="green.300"
+        _dark={{ bg: "green.500" }}
+        className="circle pulse green"
       />
     );
   }

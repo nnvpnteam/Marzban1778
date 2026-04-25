@@ -22,20 +22,18 @@ export const OnlineStatus: FC<UserStatusProps> = ({lastOnline}) => {
     const timeDifferenceInSeconds = unixTime ? currentTimeInSeconds - unixTime : null;
     const dateInfo = unixTime ? relativeExpiryDate(unixTime) : {status: "", time: "Not Connected Yet"};
 
-    const isOnline = timeDifferenceInSeconds !== null && timeDifferenceInSeconds <= 60;
-
     return (
         <Text
             display="inline-block"
             fontSize="xs"
             fontWeight="medium"
             ml={{ base: 0, md: 2 }}
-            color={isOnline ? "#4165B3" : "gray.600"}
+            color="gray.600"
             _dark={{
-                color: isOnline ? "#7b9fe0" : "gray.400",
+                color: "gray.400",
             }}
         >
-            {isOnline
+            {timeDifferenceInSeconds && timeDifferenceInSeconds <= 60
                 ? "Online"
                 : timeDifferenceInSeconds
                     ? `${dateInfo.time} ago`
