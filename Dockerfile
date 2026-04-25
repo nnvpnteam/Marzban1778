@@ -17,13 +17,22 @@ RUN python3 -m pip install --upgrade pip "setuptools<81" \
 
 FROM node:20-alpine AS dashboard-build
 
+ARG VITE_COMMIT_SHA=auto
+
 WORKDIR /dashboard
 
 COPY app/dashboard/package*.json /dashboard/
 RUN npm ci
 
 COPY app/dashboard /dashboard
-RUN npm run build
+COPY .git /tmp/.git
+RUN export VITE_COMMIT_SHA="$VITE_COMMIT_SHA"; \
+    if [ "$VITE_COMMIT_SHA" = "auto" ]; then \
+      apk add --no-cache git >/dev/null 2>&1; \
+      VITE_COMMIT_SHA="$(git --git-dir=/tmp/.git rev-parse --short HEAD 2>/dev/null || echo unknown)"; \
+    fi; \
+    echo "Building dashboard with VITE_COMMIT_SHA=$VITE_COMMIT_SHA"; \
+    VITE_COMMIT_SHA="$VITE_COMMIT_SHA" npm run build
 
 FROM python:$PYTHON_VERSION-slim
 
@@ -38,6 +47,7 @@ COPY --from=build /usr/local/share/xray /usr/local/share/xray
 
 COPY . /code
 COPY --from=dashboard-build /dashboard/build /code/app/dashboard/build
+RUN rm -rf /code/.git
 
 RUN ln -s /code/marzban-cli.py /usr/bin/marzban-cli \
     && chmod +x /usr/bin/marzban-cli \

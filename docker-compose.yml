@@ -1,6 +1,11 @@
 services:
   marzban:
-    image: gozargah/marzban:latest
+    image: marzban:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_COMMIT_SHA: auto
     restart: always
     env_file: .env
     network_mode: host
