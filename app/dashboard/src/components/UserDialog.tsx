@@ -140,6 +140,23 @@ const pickAndroidModel = (ua: string): string | null => {
   return s || null;
 };
 
+const pickAndroidModelFallback = (ua: string): string | null => {
+  const patterns = [
+    /;\s*([^;()]{2,60})\s+Build\//i,
+    /(?:device|model)\s*[:=\/]\s*([a-z0-9 ._\-]{2,80})/i,
+    /\(\s*android[^)]*;\s*([^;()]{2,60})\s*(?:;|\))/i,
+  ];
+  for (const p of patterns) {
+    const m = ua.match(p);
+    if (!m || !m[1]) continue;
+    const v = m[1].trim().replace(/^"+|"+$/g, "");
+    // Skip obvious non-model tokens.
+    if (!v || /^(linux|wv|mobile|arm|arm64|release|unknown)$/i.test(v)) continue;
+    return v.length > 80 ? `${v.slice(0, 77)}…` : v;
+  }
+  return null;
+};
+
 const pickDeviceHint = (
   ua: string,
   keys: string[]
@@ -229,7 +246,7 @@ const getDeviceVisualMeta = (userAgent?: string | null): DeviceVisualMeta => {
   }
   if (raw.includes("android") || androidHint || !!hintedModel) {
     const hinted = [hintedBrand, hintedModel].filter(Boolean).join(" ").trim();
-    const model = hinted || pickAndroidModel(ua);
+    const model = hinted || pickAndroidModel(ua) || pickAndroidModelFallback(ua);
     const ver = ua.match(/Android\s+([\d.]+)/i)?.[1];
     const deviceDetail =
       model && ver
