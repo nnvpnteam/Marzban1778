@@ -118,9 +118,11 @@ const PoolEditor: FC<PoolEditorProps> = ({
               <Tag
                 size="md"
                 borderRadius="full"
-                variant="subtle"
-                colorScheme="blue"
+                variant="outline"
+                colorScheme="gray"
                 maxW="100%"
+                bg="white"
+                _dark={{ bg: "gray.700" }}
               >
                 <TagLabel isTruncated>
                   {row.name}
@@ -184,12 +186,14 @@ const PoolEditor: FC<PoolEditorProps> = ({
               </Text>
               <Button
                 size="xs"
-                variant="solid"
-                colorScheme="primary"
+                variant="outline"
+                colorScheme="gray"
                 flexShrink={0}
                 minW="32px"
                 px={2}
                 onClick={() => add(row.id)}
+                _hover={{ bg: "gray.50", borderColor: "gray.300" }}
+                _dark={{ _hover: { bg: "whiteAlpha.100" } }}
               >
                 +
               </Button>
@@ -441,11 +445,13 @@ export const SubscriptionTrafficSettingsModal: FC<Props> = ({
                 />
               </FormControl>
               <Button
-                colorScheme="primary"
+                colorScheme="gray"
                 variant="outline"
                 size="md"
                 isLoading={bulkSaving}
                 onClick={() => void applyBulk()}
+                _hover={{ bg: "gray.50", borderColor: "gray.300" }}
+                _dark={{ _hover: { bg: "whiteAlpha.100" } }}
               >
                 {t("subscriptionTraffic.bulkApply")}
               </Button>

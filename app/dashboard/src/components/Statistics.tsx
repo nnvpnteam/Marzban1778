@@ -170,6 +170,7 @@ export const Statistics: FC<BoxProps> = (props) => {
               <Text
                 as="span"
                 fontWeight="normal"
+                fontSize="xl"
                 color="gray.500"
                 _dark={{ color: "gray.400" }}
               >
@@ -178,6 +179,7 @@ export const Statistics: FC<BoxProps> = (props) => {
               <Text
                 as="span"
                 fontWeight="normal"
+                fontSize="xl"
                 color="gray.500"
                 _dark={{ color: "gray.400" }}
               >

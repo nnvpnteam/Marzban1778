@@ -697,6 +697,10 @@ const SubscriptionTrialLabel: FC<{ user: User }> = ({ user }) => {
   return (
     <Text
       as="span"
+      display="inline-flex"
+      alignItems="center"
+      minH="22px"
+      lineHeight={1}
       fontSize="xs"
       fontWeight="semibold"
       whiteSpace="nowrap"
@@ -729,6 +733,10 @@ const SubscriptionDevicesLabel: FC<{ user: User }> = ({ user }) => {
   return (
     <Text
       as="span"
+      display="inline-flex"
+      alignItems="center"
+      minH="22px"
+      lineHeight={1}
       fontSize="xs"
       fontWeight="semibold"
       whiteSpace="nowrap"

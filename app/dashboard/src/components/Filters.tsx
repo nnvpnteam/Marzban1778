@@ -128,8 +128,8 @@ export const Filters: FC<FilterProps> = ({ ...props }) => {
                 e.stopPropagation();
                 setPoolSettingsOpen(true);
               }}
-              _hover={{ bg: "blackAlpha.50" }}
-              _active={{ bg: "blackAlpha.100" }}
+              _hover={{ bg: "gray.50", borderColor: "gray.300" }}
+              _active={{ bg: "gray.100" }}
               _dark={{
                 color: "gray.300",
                 borderColor: "gray.600",
