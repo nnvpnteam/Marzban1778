@@ -106,6 +106,58 @@ def build_device_user_agent(user_agent: str, request: Request) -> str:
     return merged[:512]
 
 
+def _first_nonempty(*values: str | None) -> str | None:
+    for v in values:
+        if v and v.strip():
+            return v.strip().strip('"')
+    return None
+
+
+def resolve_device_details(request: Request, user_agent: str) -> dict[str, str | None]:
+    platform = _first_nonempty(
+        request.headers.get("x-device-os"),
+        request.headers.get("x-device-platform"),
+        request.headers.get("x-os-name"),
+        request.headers.get("sec-ch-ua-platform"),
+        request.query_params.get("device_os"),
+        request.query_params.get("device_platform"),
+        request.query_params.get("platform"),
+        request.query_params.get("os"),
+    )
+    os_version = _first_nonempty(
+        request.headers.get("x-ver-os"),
+        request.headers.get("x-os-version"),
+        request.query_params.get("os_version"),
+        request.query_params.get("ver_os"),
+    )
+    device_model = _first_nonempty(
+        request.headers.get("x-device-model"),
+        request.headers.get("x-device-name"),
+        request.query_params.get("device_model"),
+        request.query_params.get("device_name"),
+        request.query_params.get("model"),
+    )
+
+    if not platform and user_agent:
+        low = user_agent.lower()
+        if "android" in low:
+            platform = "Android"
+        elif "iphone" in low or "ipad" in low or "ios" in low:
+            platform = "iOS"
+        elif "windows" in low:
+            platform = "Windows"
+        elif "macintosh" in low or "mac os" in low:
+            platform = "macOS"
+        elif "linux" in low or "x11" in low:
+            platform = "Linux"
+
+    return {
+        "platform": (platform or "")[:32] or None,
+        "os_version": (os_version or "")[:64] or None,
+        "device_model": (device_model or "")[:128] or None,
+    }
+
+
 def get_subscription_user_info(user: UserResponse) -> dict:
     """Retrieve user subscription information including upload, download, total data, and expiry."""
     return {
@@ -137,10 +189,19 @@ def user_subscription(
         )
 
     device_ua = build_device_user_agent(user_agent, request)
+    device_details = resolve_device_details(request, device_ua)
     device_id = resolve_hwid(request, device_ua)
     if device_id:
         try:
-            crud.register_user_hwid(db, dbuser, device_id, device_ua)
+            crud.register_user_hwid(
+                db,
+                dbuser,
+                device_id,
+                device_ua,
+                platform=device_details["platform"],
+                os_version=device_details["os_version"],
+                device_model=device_details["device_model"],
+            )
         except ValueError:
             raise HTTPException(status_code=403, detail="HWID device limit reached")
 
@@ -266,10 +327,19 @@ def user_subscription_with_client_type(
 
     config = client_config.get(client_type)
     device_ua = build_device_user_agent(user_agent, request)
+    device_details = resolve_device_details(request, device_ua)
     device_id = resolve_hwid(request, device_ua)
     if device_id:
         try:
-            crud.register_user_hwid(db, dbuser, device_id, device_ua)
+            crud.register_user_hwid(
+                db,
+                dbuser,
+                device_id,
+                device_ua,
+                platform=device_details["platform"],
+                os_version=device_details["os_version"],
+                device_model=device_details["device_model"],
+            )
         except ValueError:
             raise HTTPException(status_code=403, detail="HWID device limit reached")
 

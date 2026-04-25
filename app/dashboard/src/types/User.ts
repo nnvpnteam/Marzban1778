@@ -38,6 +38,9 @@ export type UserInbounds = {
 
 export type UserHWIDDevice = {
   device_id: string;
+  platform?: string | null;
+  os_version?: string | null;
+  device_model?: string | null;
   user_agent?: string | null;
   created_at: string;
   last_seen_at: string;

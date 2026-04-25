@@ -204,9 +204,19 @@ const pickDesktopDetail = (ua: string): string => {
   return "Desktop";
 };
 
-const getDeviceVisualMeta = (userAgent?: string | null): DeviceVisualMeta => {
+const getDeviceVisualMeta = (
+  userAgent?: string | null,
+  explicit?: {
+    platform?: string | null;
+    osVersion?: string | null;
+    deviceModel?: string | null;
+  }
+): DeviceVisualMeta => {
   const ua = userAgent || "";
   const raw = ua.toLowerCase();
+  const explicitPlatform = (explicit?.platform || "").toLowerCase();
+  const explicitModel = (explicit?.deviceModel || "").trim();
+  const explicitOs = (explicit?.osVersion || "").trim();
   const hintedModel = pickDeviceHint(ua, [
     "x-device-model",
     "device_model",
@@ -240,7 +250,15 @@ const getDeviceVisualMeta = (userAgent?: string | null): DeviceVisualMeta => {
     ua.split(/\s+/)[0]?.trim() ||
     "Unknown app";
 
-  if (raw.includes("iphone") || raw.includes("ios") || raw.includes("ipad") || iosHint) {
+  if (
+    raw.includes("iphone") ||
+    raw.includes("ios") ||
+    raw.includes("ipad") ||
+    iosHint ||
+    explicitPlatform.includes("ios") ||
+    explicitPlatform.includes("iphone") ||
+    explicitPlatform.includes("ipad")
+  ) {
     const isPad = raw.includes("ipad");
     const platformBadge = isPad ? "iPadOS" : "iOS";
     const hw = ua.match(/\b(iPhone\d+,\d+|iPad\d+,\d+|iPod\d+,\d+)\b/i);
@@ -263,12 +281,18 @@ const getDeviceVisualMeta = (userAgent?: string | null): DeviceVisualMeta => {
       colorScheme: "orange",
     };
   }
-  if (raw.includes("android") || androidHint || !!hintedModel) {
+  if (
+    raw.includes("android") ||
+    androidHint ||
+    !!hintedModel ||
+    explicitPlatform.includes("android") ||
+    !!explicitModel
+  ) {
     const hinted = [hintedBrand, hintedModel].filter(Boolean).join(" ").trim();
     const model = sanitizeAndroidModel(
-      hinted || pickAndroidModel(ua) || pickAndroidModelFallback(ua)
+      explicitModel || hinted || pickAndroidModel(ua) || pickAndroidModelFallback(ua)
     );
-    const ver = ua.match(/Android\s+([\d.]+)/i)?.[1];
+    const ver = explicitOs || ua.match(/Android\s+([\d.]+)/i)?.[1];
     const deviceDetail =
       model && ver
         ? `${model} · Android ${ver}`
@@ -1142,7 +1166,11 @@ export const UserDialog: FC<UserDialogProps> = () => {
                         {!!editingUser?.hwid_devices?.length ? (
                           <VStack align="stretch" gap={{ base: 2, md: 2 }}>
                             {editingUser.hwid_devices.map((device) => {
-                              const meta = getDeviceVisualMeta(device.user_agent);
+                              const meta = getDeviceVisualMeta(device.user_agent, {
+                                platform: device.platform,
+                                osVersion: device.os_version,
+                                deviceModel: device.device_model,
+                              });
                               const seen = dayjs(device.last_seen_at).format("DD.MM.YYYY");
                               const pillParts = getDeviceCardPillParts(meta);
                               const pillColors = getDevicePillColors(meta.platform);

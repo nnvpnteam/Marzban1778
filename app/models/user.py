@@ -62,6 +62,9 @@ class NextPlanModel(BaseModel):
 
 class UserHWIDDeviceModel(BaseModel):
     device_id: str
+    platform: Optional[str] = None
+    os_version: Optional[str] = None
+    device_model: Optional[str] = None
     user_agent: Optional[str] = None
     created_at: datetime
     last_seen_at: datetime

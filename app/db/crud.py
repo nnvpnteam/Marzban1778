@@ -691,7 +691,13 @@ def update_user_sub(db: Session, dbuser: User, user_agent: str) -> User:
 
 
 def register_user_hwid(
-        db: Session, dbuser: User, device_id: str, user_agent: str = None
+        db: Session,
+        dbuser: User,
+        device_id: str,
+        user_agent: str = None,
+        platform: str = None,
+        os_version: str = None,
+        device_model: str = None,
 ) -> UserHWIDDevice:
     effective_limit = dbuser.hwid_device_limit
     if effective_limit is None:
@@ -718,6 +724,9 @@ def register_user_hwid(
     )
     if device:
         device.user_agent = user_agent or device.user_agent
+        device.platform = platform or device.platform
+        device.os_version = os_version or device.os_version
+        device.device_model = device_model or device.device_model
         device.last_seen_at = datetime.utcnow()
         db.commit()
         db.refresh(device)
@@ -729,6 +738,9 @@ def register_user_hwid(
     device = UserHWIDDevice(
         user=dbuser,
         device_id=device_id,
+        platform=platform or None,
+        os_version=os_version or None,
+        device_model=device_model or None,
         user_agent=user_agent or None,
         last_seen_at=datetime.utcnow(),
     )
