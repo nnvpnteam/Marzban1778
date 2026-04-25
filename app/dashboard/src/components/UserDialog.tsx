@@ -249,8 +249,7 @@ const getDeviceVisualMeta = (
   const explicitAndroid = explicitPlatform.includes("android");
   const hasRawIos = raw.includes("iphone") || raw.includes("ios") || raw.includes("ipad");
   const hasRawAndroid = raw.includes("android");
-  const hasAndroidEvidence =
-    explicitAndroid || androidHint || hasRawAndroid || !!hintedModel || !!explicitModel;
+  const hasAndroidEvidence = explicitAndroid || androidHint || hasRawAndroid;
   const hasIosEvidence = explicitIos || iosHint || hasRawIos;
   const appName =
     ua.split("/")[0]?.trim() ||
