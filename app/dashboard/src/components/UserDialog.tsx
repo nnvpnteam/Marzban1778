@@ -157,6 +157,25 @@ const pickAndroidModelFallback = (ua: string): string | null => {
   return null;
 };
 
+const sanitizeAndroidModel = (value: string | null): string | null => {
+  if (!value) return null;
+  const v = value.trim();
+  if (!v) return null;
+
+  // Ignore desktop-like hostnames and architecture-only pseudo-models.
+  if (/^(desktop|laptop|pc)-/i.test(v)) return null;
+  if (/^(x86_64|x86|amd64|arm64|aarch64)$/i.test(v)) return null;
+  if (/(?:^|[_\-\s])(x86_64|x86|amd64|arm64|aarch64)(?:$|[_\-\s])/i.test(v)) {
+    const cleaned = v
+      .replace(/(?:^|[_\-\s])(x86_64|x86|amd64|arm64|aarch64)(?:$|[_\-\s])/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!cleaned || /^(desktop|laptop|pc)-/i.test(cleaned)) return null;
+    return cleaned;
+  }
+  return v;
+};
+
 const pickDeviceHint = (
   ua: string,
   keys: string[]
@@ -246,7 +265,9 @@ const getDeviceVisualMeta = (userAgent?: string | null): DeviceVisualMeta => {
   }
   if (raw.includes("android") || androidHint || !!hintedModel) {
     const hinted = [hintedBrand, hintedModel].filter(Boolean).join(" ").trim();
-    const model = hinted || pickAndroidModel(ua) || pickAndroidModelFallback(ua);
+    const model = sanitizeAndroidModel(
+      hinted || pickAndroidModel(ua) || pickAndroidModelFallback(ua)
+    );
     const ver = ua.match(/Android\s+([\d.]+)/i)?.[1];
     const deviceDetail =
       model && ver
