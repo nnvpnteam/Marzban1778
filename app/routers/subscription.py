@@ -54,6 +54,47 @@ def resolve_hwid(request: Request, user_agent: str) -> str | None:
     return None
 
 
+def resolve_device_context(request: Request) -> str:
+    """
+    Build compact device context from optional headers/query params so dashboard
+    can show a more specific device name even when User-Agent is generic.
+    """
+    hints: dict[str, str] = {}
+    for key in (
+        "x-device-model",
+        "x-device-name",
+        "x-device-brand",
+        "x-device-manufacturer",
+        "x-client-device",
+        "sec-ch-ua-model",
+        "sec-ch-ua-platform",
+    ):
+        value = request.headers.get(key)
+        if value:
+            hints[key] = value.strip().strip('"')
+
+    for qk in ("device_model", "device_name", "device_brand", "model", "brand"):
+        qv = request.query_params.get(qk)
+        if qv:
+            hints[qk] = qv.strip()
+
+    if not hints:
+        return ""
+
+    parts = [f"{k}={v}" for k, v in hints.items() if v]
+    if not parts:
+        return ""
+    return " | " + ";".join(parts)
+
+
+def build_device_user_agent(user_agent: str, request: Request) -> str:
+    ua = (user_agent or "").strip()
+    ctx = resolve_device_context(request)
+    # Keep DB field safe (user_hwid_devices.user_agent is String(512)).
+    merged = (ua + ctx).strip() if ctx else ua
+    return merged[:512]
+
+
 def get_subscription_user_info(user: UserResponse) -> dict:
     """Retrieve user subscription information including upload, download, total data, and expiry."""
     return {
@@ -84,14 +125,15 @@ def user_subscription(
             )
         )
 
-    device_id = resolve_hwid(request, user_agent)
+    device_ua = build_device_user_agent(user_agent, request)
+    device_id = resolve_hwid(request, device_ua)
     if device_id:
         try:
-            crud.register_user_hwid(db, dbuser, device_id, user_agent)
+            crud.register_user_hwid(db, dbuser, device_id, device_ua)
         except ValueError:
             raise HTTPException(status_code=403, detail="HWID device limit reached")
 
-    crud.update_user_sub(db, dbuser, user_agent)
+    crud.update_user_sub(db, dbuser, device_ua)
     response_headers = {
         "content-disposition": f'attachment; filename="{user.username}"',
         "profile-web-page-url": str(request.url),
@@ -212,14 +254,15 @@ def user_subscription_with_client_type(
     }
 
     config = client_config.get(client_type)
-    device_id = resolve_hwid(request, user_agent)
+    device_ua = build_device_user_agent(user_agent, request)
+    device_id = resolve_hwid(request, device_ua)
     if device_id:
         try:
-            crud.register_user_hwid(db, dbuser, device_id, user_agent)
+            crud.register_user_hwid(db, dbuser, device_id, device_ua)
         except ValueError:
             raise HTTPException(status_code=403, detail="HWID device limit reached")
 
-    crud.update_user_sub(db, dbuser, user_agent)
+    crud.update_user_sub(db, dbuser, device_ua)
     conf = generate_subscription(user=user,
                                  config_format=config["config_format"],
                                  as_base64=config["as_base64"],

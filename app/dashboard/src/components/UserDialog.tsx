@@ -140,6 +140,21 @@ const pickAndroidModel = (ua: string): string | null => {
   return s || null;
 };
 
+const pickDeviceHint = (
+  ua: string,
+  keys: string[]
+): string | null => {
+  for (const key of keys) {
+    const r = new RegExp(`${key}=([^;|]+)`, "i");
+    const m = ua.match(r);
+    if (m && m[1]) {
+      const v = m[1].trim().replace(/^"+|"+$/g, "");
+      if (v) return v;
+    }
+  }
+  return null;
+};
+
 const pickDesktopDetail = (ua: string): string => {
   const mac = ua.match(/Mac\s+OS\s+X\s+([\d_]+)/i);
   if (mac) return `Mac · macOS ${mac[1].replace(/_/g, ".")}`;
@@ -156,6 +171,21 @@ const pickDesktopDetail = (ua: string): string => {
 const getDeviceVisualMeta = (userAgent?: string | null): DeviceVisualMeta => {
   const ua = userAgent || "";
   const raw = ua.toLowerCase();
+  const hintedModel = pickDeviceHint(ua, [
+    "x-device-model",
+    "device_model",
+    "model",
+    "x-device-name",
+    "device_name",
+    "x-client-device",
+    "sec-ch-ua-model",
+  ]);
+  const hintedBrand = pickDeviceHint(ua, [
+    "x-device-brand",
+    "x-device-manufacturer",
+    "device_brand",
+    "brand",
+  ]);
   const appName =
     ua.split("/")[0]?.trim() ||
     ua.split(/\s+/)[0]?.trim() ||
@@ -185,7 +215,8 @@ const getDeviceVisualMeta = (userAgent?: string | null): DeviceVisualMeta => {
     };
   }
   if (raw.includes("android")) {
-    const model = pickAndroidModel(ua);
+    const hinted = [hintedBrand, hintedModel].filter(Boolean).join(" ").trim();
+    const model = hinted || pickAndroidModel(ua);
     const ver = ua.match(/Android\s+([\d.]+)/i)?.[1];
     const deviceDetail =
       model && ver
