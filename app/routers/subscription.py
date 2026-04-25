@@ -65,6 +65,8 @@ def resolve_device_context(request: Request) -> str:
         "x-device-name",
         "x-device-brand",
         "x-device-manufacturer",
+        "x-device-platform",
+        "x-os-name",
         "x-client-device",
         "sec-ch-ua-model",
         "sec-ch-ua-platform",
@@ -73,7 +75,16 @@ def resolve_device_context(request: Request) -> str:
         if value:
             hints[key] = value.strip().strip('"')
 
-    for qk in ("device_model", "device_name", "device_brand", "model", "brand"):
+    for qk in (
+        "device_model",
+        "device_name",
+        "device_brand",
+        "device_platform",
+        "platform",
+        "os",
+        "model",
+        "brand",
+    ):
         qv = request.query_params.get(qk)
         if qv:
             hints[qk] = qv.strip()

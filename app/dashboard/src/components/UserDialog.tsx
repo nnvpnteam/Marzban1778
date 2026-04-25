@@ -186,12 +186,25 @@ const getDeviceVisualMeta = (userAgent?: string | null): DeviceVisualMeta => {
     "device_brand",
     "brand",
   ]);
+  const hintedPlatform = (
+    pickDeviceHint(ua, [
+      "x-device-platform",
+      "device_platform",
+      "platform",
+      "x-os-name",
+      "os",
+      "sec-ch-ua-platform",
+    ]) || ""
+  ).toLowerCase();
+  const iosHint =
+    hintedPlatform.includes("ios") || hintedPlatform.includes("iphone") || hintedPlatform.includes("ipad");
+  const androidHint = hintedPlatform.includes("android");
   const appName =
     ua.split("/")[0]?.trim() ||
     ua.split(/\s+/)[0]?.trim() ||
     "Unknown app";
 
-  if (raw.includes("iphone") || raw.includes("ios") || raw.includes("ipad")) {
+  if (raw.includes("iphone") || raw.includes("ios") || raw.includes("ipad") || iosHint) {
     const isPad = raw.includes("ipad");
     const platformBadge = isPad ? "iPadOS" : "iOS";
     const hw = ua.match(/\b(iPhone\d+,\d+|iPad\d+,\d+|iPod\d+,\d+)\b/i);
@@ -214,7 +227,7 @@ const getDeviceVisualMeta = (userAgent?: string | null): DeviceVisualMeta => {
       colorScheme: "orange",
     };
   }
-  if (raw.includes("android")) {
+  if (raw.includes("android") || androidHint || !!hintedModel) {
     const hinted = [hintedBrand, hintedModel].filter(Boolean).join(" ").trim();
     const model = hinted || pickAndroidModel(ua);
     const ver = ua.match(/Android\s+([\d.]+)/i)?.[1];
