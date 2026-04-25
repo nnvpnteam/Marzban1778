@@ -1199,6 +1199,12 @@ export const UserDialog: FC<UserDialogProps> = () => {
                               });
                               const seen = dayjs(device.last_seen_at).format("DD.MM.YYYY");
                               const pillParts = getDeviceCardPillParts(meta);
+                              const normalizedPlatform = (
+                                device.platform || pillParts.platform
+                              ).trim();
+                              const normalizedDevice = (
+                                device.device_model || pillParts.device
+                              ).trim();
                               const pillColors = getDevicePillColors(meta.platform);
                               return (
                                 <Box
@@ -1264,7 +1270,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                                 fontFamily="body"
                                                 flexShrink={0}
                                               >
-                                                {pillParts.platform}
+                                                {normalizedPlatform}
                                               </Text>
                                               <Text
                                                 as="span"
@@ -1286,7 +1292,7 @@ export const UserDialog: FC<UserDialogProps> = () => {
                                                 noOfLines={1}
                                                 isTruncated
                                               >
-                                                {pillParts.device}
+                                                {normalizedDevice}
                                               </Text>
                                             </HStack>
                                           </Box>
