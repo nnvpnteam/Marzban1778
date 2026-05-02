@@ -1699,6 +1699,9 @@ def update_subscription_traffic_settings(
     return get_subscription_traffic_settings(db)
 
 
+_BULK_SUBSCRIPTION_GROUP_BATCH = 500
+
+
 def bulk_adjust_subscription_group_users(
     db: Session,
     *,
@@ -1709,20 +1712,59 @@ def bulk_adjust_subscription_group_users(
     """
     Adjust expire and/or data_limit for every user in the trial or paid (non-trial) group.
     Only rows with non-null expire / data_limit are updated for the respective field.
+
+    Large cohorts are updated in batches (commit per batch) to shorten row locks and avoid
+    proxy / DB timeouts on thousands of users.
     """
     flt = (User.is_trial == is_trial,)
     matched = db.query(User).filter(*flt).count()
+    batch = _BULK_SUBSCRIPTION_GROUP_BATCH
+    ran_update = False
+
     if add_expire_days is not None and add_expire_days != 0:
+        ran_update = True
         delta = int(add_expire_days) * 86400
-        db.query(User).filter(*flt, User.expire.isnot(None)).update(
-            {User.expire: User.expire + delta},
-            synchronize_session=False,
-        )
+        last_id = 0
+        while True:
+            ids = [
+                row[0]
+                for row in db.query(User.id)
+                .filter(*flt, User.expire.isnot(None), User.id > last_id)
+                .order_by(User.id)
+                .limit(batch)
+                .all()
+            ]
+            if not ids:
+                break
+            db.query(User).filter(User.id.in_(ids)).update(
+                {User.expire: User.expire + delta},
+                synchronize_session=False,
+            )
+            db.commit()
+            last_id = ids[-1]
+
     if add_data_limit_bytes is not None and add_data_limit_bytes != 0:
+        ran_update = True
         b = int(add_data_limit_bytes)
-        db.query(User).filter(*flt, User.data_limit.isnot(None)).update(
-            {User.data_limit: func.greatest(0, User.data_limit + b)},
-            synchronize_session=False,
-        )
-    db.commit()
+        last_id = 0
+        while True:
+            ids = [
+                row[0]
+                for row in db.query(User.id)
+                .filter(*flt, User.data_limit.isnot(None), User.id > last_id)
+                .order_by(User.id)
+                .limit(batch)
+                .all()
+            ]
+            if not ids:
+                break
+            db.query(User).filter(User.id.in_(ids)).update(
+                {User.data_limit: func.greatest(0, User.data_limit + b)},
+                synchronize_session=False,
+            )
+            db.commit()
+            last_id = ids[-1]
+
+    if not ran_update:
+        db.commit()
     return matched
