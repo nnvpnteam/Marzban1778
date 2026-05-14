@@ -549,8 +549,6 @@ export const UsersTable: FC<UsersTableProps> = (props) => {
       <Table
         orientation="vertical"
         display={{ base: "none", md: "table" }}
-        tableLayout="fixed"
-        w="full"
         {...props}
       >
         <Thead zIndex="docked" position="relative">

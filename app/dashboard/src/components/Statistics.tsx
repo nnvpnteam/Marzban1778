@@ -80,19 +80,16 @@ const StatisticCard: FC<PropsWithChildren<StatisticCardProps>> = ({
       boxShadow="none"
       borderRadius={{ base: "10px", md: "12px" }}
       width="full"
-      h="full"
       display="flex"
-      flexDirection="row"
-      alignItems="center"
       justifyContent="space-between"
+      flexDirection="row"
       minW={0}
     >
-      <HStack alignItems="center" columnGap={{ base: 2, md: 4 }} minW={0} flex="1" pr={2}>
+      <HStack alignItems="center" columnGap={{ base: 2, md: 4 }} minW={0}>
         <Box
           p={{ base: "1.5", md: "2" }}
           position="relative"
           color="white"
-          flexShrink={0}
           _before={{
             content: `""`,
             position: "absolute",
@@ -139,10 +136,10 @@ const StatisticCard: FC<PropsWithChildren<StatisticCardProps>> = ({
       <Box
         fontSize={{ base: "xl", sm: "2xl", md: "3xl" }}
         fontWeight="semibold"
+        mt={{ base: 0, md: 2 }}
         flexShrink={0}
         textAlign="right"
         minW={0}
-        lineHeight="shorter"
       >
         {content}
       </Box>
@@ -167,7 +164,6 @@ export const Statistics: FC<BoxProps> = (props) => {
       columns={{ base: 2, md: 2, xl: 4 }}
       spacing={{ base: 2, md: 3, xl: 4 }}
       w="full"
-      alignItems="stretch"
       {...props}
     >
       <StatisticCard
