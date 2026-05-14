@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app import logger, scheduler, xray
 from app.db import (GetDB, get_notification_reminder, get_users,
                     start_user_expire, update_user_status, reset_user_by_next)
+from app.db.crud import get_system_usage, subscription_metered_nodes
 from app.models.user import ReminderType, UserResponse, UserStatus
 from app.utils import report
 from app.utils.helpers import (calculate_expiration_days,
@@ -55,6 +56,10 @@ def review():
     now = datetime.utcnow()
     now_ts = now.timestamp()
     with GetDB() as db:
+        sys_row = get_system_usage(db)
+        trial_m = subscription_metered_nodes(sys_row.trial_metered_node_ids)
+        paid_m = subscription_metered_nodes(sys_row.paid_metered_node_ids)
+
         for user in get_users(db, status=UserStatus.active):
 
             limited = user.data_limit and user.used_traffic >= user.data_limit
@@ -80,7 +85,17 @@ def review():
                     add_notification_reminders(db, user, now)
                 continue
 
-            xray.operations.remove_user(user)
+            expired_for_limits = user.expire is not None and user.expire <= now_ts
+
+            if status == UserStatus.limited and not expired_for_limits:
+                metered = trial_m if user.is_trial else paid_m
+                if metered:
+                    xray.operations.remove_user_from_metered_nodes(user, metered)
+                else:
+                    xray.operations.remove_user(user)
+            else:
+                xray.operations.remove_user(user)
+
             update_user_status(db, user, status)
 
             report.status_change(username=user.username, status=status,

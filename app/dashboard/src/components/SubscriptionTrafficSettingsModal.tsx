@@ -313,7 +313,7 @@ export const SubscriptionTrafficSettingsModal: FC<Props> = ({
       if (hasG) body.add_data_limit_gb = g;
       const res = await fetch<{ matched_users: number }>(
         "/subscription_traffic_group_bulk",
-        { method: "POST", body }
+        { method: "POST", body, timeout: 900_000 }
       );
       toast({
         title: t("subscriptionTraffic.bulkDone", {

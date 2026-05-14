@@ -110,6 +110,29 @@ def remove_user_from_node(node_id: int, dbuser: "DBUser"):
         _remove_user_from_inbound(node.api, inbound_tag, email)
 
 
+def remove_user_from_metered_nodes(dbuser: "DBUser", metered_node_ids: frozenset):
+    """
+    Remove the user from Xray inbounds only on the given node ids.
+
+    ``metered_node_ids`` comes from subscription traffic settings (trial/paid pool).
+    ``None`` means the main Marzban core (``xray.api``), same convention as
+    :func:`app.db.crud.subscription_metered_nodes`.
+    """
+    if not metered_node_ids:
+        return
+    email = f"{dbuser.id}.{dbuser.username}"
+    for inbound_tag in xray.config.inbounds_by_tag:
+        if None in metered_node_ids:
+            _remove_user_from_inbound(xray.api, inbound_tag, email)
+        for nid in metered_node_ids:
+            if nid is None:
+                continue
+            node = xray.nodes.get(nid)
+            if not node or not node.connected or not node.started:
+                continue
+            _remove_user_from_inbound(node.api, inbound_tag, email)
+
+
 def update_user(dbuser: "DBUser"):
     user = UserResponse.model_validate(dbuser)
     email = f"{dbuser.id}.{dbuser.username}"
@@ -283,6 +306,7 @@ __all__ = [
     "add_user",
     "remove_user",
     "remove_user_from_node",
+    "remove_user_from_metered_nodes",
     "add_node",
     "remove_node",
     "connect_node",
