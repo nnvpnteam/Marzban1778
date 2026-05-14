@@ -113,6 +113,8 @@ export const Header: FC<HeaderProps> = ({ actions }) => {
     <HStack
       gap={2}
       justifyContent="space-between"
+      alignItems="center"
+      flexWrap={{ base: "wrap", md: "nowrap" }}
       __css={{
         "& .menuList": {
           direction: "ltr",

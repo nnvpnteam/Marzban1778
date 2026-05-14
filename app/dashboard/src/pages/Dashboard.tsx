@@ -31,7 +31,7 @@ export const Dashboard: FC = () => {
       pb={{ base: 4, md: 6 }}
       rowGap={{ base: 3, md: 4 }}
     >
-      <Box w="full">
+      <Box w="full" maxW="1280px" mx="auto">
         <Header />
         <Statistics mt={{ base: 3, md: 4 }} />
         <Filters />
@@ -47,7 +47,9 @@ export const Dashboard: FC = () => {
         <ResetAllUsageModal />
         <CoreSettingsModal />
       </Box>
-      <Footer />
+      <Box w="full" maxW="1280px" mx="auto">
+        <Footer />
+      </Box>
     </VStack>
   );
 };
