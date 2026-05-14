@@ -6,7 +6,6 @@ import {
   HStack,
   SimpleGrid,
   Text,
-  VStack,
 } from "@chakra-ui/react";
 import {
   BanknotesIcon,
@@ -85,45 +84,44 @@ const StatisticCard: FC<PropsWithChildren<StatisticCardProps>> = ({
       display="flex"
       flexDirection="row"
       alignItems="center"
-      justifyContent="flex-start"
-      gap={{ base: 3, md: 4 }}
+      justifyContent="space-between"
       minW={0}
     >
-      <Box
-        p={{ base: "1.5", md: "2" }}
-        position="relative"
-        color="white"
-        flexShrink={0}
-        _before={{
-          content: `""`,
-          position: "absolute",
-          top: 0,
-          left: 0,
-          bg: accentColor,
-          display: "block",
-          w: "full",
-          h: "full",
-          borderRadius: "5px",
-          opacity: ".5",
-          z: "1",
-        }}
-        _after={{
-          content: `""`,
-          position: "absolute",
-          top: "-5px",
-          left: "-5px",
-          bg: accentColor,
-          display: "block",
-          w: "calc(100% + 10px)",
-          h: "calc(100% + 10px)",
-          borderRadius: "8px",
-          opacity: ".4",
-          z: "1",
-        }}
-      >
-        {icon}
-      </Box>
-      <VStack align="flex-start" spacing={1} minW={0} flex="1">
+      <HStack alignItems="center" columnGap={{ base: 2, md: 4 }} minW={0} flex="1" pr={2}>
+        <Box
+          p={{ base: "1.5", md: "2" }}
+          position="relative"
+          color="white"
+          flexShrink={0}
+          _before={{
+            content: `""`,
+            position: "absolute",
+            top: 0,
+            left: 0,
+            bg: accentColor,
+            display: "block",
+            w: "full",
+            h: "full",
+            borderRadius: "5px",
+            opacity: ".5",
+            z: "1",
+          }}
+          _after={{
+            content: `""`,
+            position: "absolute",
+            top: "-5px",
+            left: "-5px",
+            bg: accentColor,
+            display: "block",
+            w: "calc(100% + 10px)",
+            h: "calc(100% + 10px)",
+            borderRadius: "8px",
+            opacity: ".4",
+            z: "1",
+          }}
+        >
+          {icon}
+        </Box>
         <Text
           color="gray.600"
           _dark={{
@@ -137,16 +135,17 @@ const StatisticCard: FC<PropsWithChildren<StatisticCardProps>> = ({
         >
           {title}
         </Text>
-        <Box
-          fontSize={{ base: "lg", sm: "xl", md: "2xl" }}
-          fontWeight="semibold"
-          lineHeight="shorter"
-          minW={0}
-          w="full"
-        >
-          {content}
-        </Box>
-      </VStack>
+      </HStack>
+      <Box
+        fontSize={{ base: "xl", sm: "2xl", md: "3xl" }}
+        fontWeight="semibold"
+        flexShrink={0}
+        textAlign="right"
+        minW={0}
+        lineHeight="shorter"
+      >
+        {content}
+      </Box>
     </Card>
   );
 };
