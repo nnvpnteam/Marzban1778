@@ -218,7 +218,7 @@
   "subscriptionTraffic.bulkApply": "Apply",
   "subscriptionTraffic.bulkNeedChange": "Enter days and/or GiB (non-zero).",
   "subscriptionTraffic.bulkConfirm": "Apply to all «{{group}}» users?",
-  "subscriptionTraffic.bulkDone": "Matched: {{count}}",
+  "subscriptionTraffic.bulkDone": "Matched: {{count}}, reactivated: {{reactivated}}",
   "subscriptionTraffic.bulkError": "Bulk update failed"
 }
 

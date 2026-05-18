@@ -218,6 +218,6 @@
   "subscriptionTraffic.bulkApply": "Применить",
   "subscriptionTraffic.bulkNeedChange": "Укажите дни и/или ГиБ (не ноль).",
   "subscriptionTraffic.bulkConfirm": "Применить ко всем «{{group}}»?",
-  "subscriptionTraffic.bulkDone": "Учтено: {{count}}",
+  "subscriptionTraffic.bulkDone": "Учтено: {{count}}, снова активны: {{reactivated}}",
   "subscriptionTraffic.bulkError": "Ошибка массового изменения"
 }

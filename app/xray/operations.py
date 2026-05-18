@@ -110,6 +110,48 @@ def remove_user_from_node(node_id: int, dbuser: "DBUser"):
         _remove_user_from_inbound(node.api, inbound_tag, email)
 
 
+def add_user_to_metered_nodes(dbuser: "DBUser", metered_node_ids: frozenset):
+    """
+    Add the user to Xray inbounds only on the given node ids (see remove_user_from_metered_nodes).
+    """
+    if not metered_node_ids:
+        return
+    user = UserResponse.model_validate(dbuser)
+    email = f"{dbuser.id}.{dbuser.username}"
+
+    for proxy_type, inbound_tags in user.inbounds.items():
+        for inbound_tag in inbound_tags:
+            inbound = xray.config.inbounds_by_tag.get(inbound_tag, {})
+
+            try:
+                proxy_settings = user.proxies[proxy_type].dict(no_obj=True)
+            except KeyError:
+                continue
+            account = proxy_type.account_model(email=email, **proxy_settings)
+
+            if getattr(account, 'flow', None) and (
+                inbound.get('network', 'tcp') not in ('tcp', 'kcp')
+                or
+                (
+                    inbound.get('network', 'tcp') in ('tcp', 'kcp')
+                    and
+                    inbound.get('tls') not in ('tls', 'reality')
+                )
+                or
+                inbound.get('header_type') == 'http'
+            ):
+                account.flow = XTLSFlows.NONE
+
+            if None in metered_node_ids:
+                _add_user_to_inbound(xray.api, inbound_tag, account)
+            for nid in metered_node_ids:
+                if nid is None:
+                    continue
+                node = xray.nodes.get(nid)
+                if node and node.connected and node.started:
+                    _add_user_to_inbound(node.api, inbound_tag, account)
+
+
 def remove_user_from_metered_nodes(dbuser: "DBUser", metered_node_ids: frozenset):
     """
     Remove the user from Xray inbounds only on the given node ids.
@@ -307,6 +349,7 @@ __all__ = [
     "remove_user",
     "remove_user_from_node",
     "remove_user_from_metered_nodes",
+    "add_user_to_metered_nodes",
     "add_node",
     "remove_node",
     "connect_node",

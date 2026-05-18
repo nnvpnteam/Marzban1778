@@ -1699,13 +1699,54 @@ def update_subscription_traffic_settings(
     return get_subscription_traffic_settings(db)
 
 
+def _bulk_reactivate_limited_under_data_limit(
+    db: Session,
+    flt: tuple,
+    *,
+    batch_size: int = 500,
+) -> List[int]:
+    """Set limited -> active when used_traffic is below the (already updated) data_limit."""
+    reactivated: List[int] = []
+    last_id = 0
+    while True:
+        batch_ids = [
+            row[0]
+            for row in (
+                db.query(User.id)
+                .filter(
+                    *flt,
+                    User.status == UserStatus.limited,
+                    User.data_limit.isnot(None),
+                    User.used_traffic < User.data_limit,
+                    User.id > last_id,
+                )
+                .order_by(User.id.asc())
+                .limit(batch_size)
+                .all()
+            )
+        ]
+        if not batch_ids:
+            break
+        last_id = batch_ids[-1]
+        db.query(User).filter(User.id.in_(batch_ids)).update(
+            {
+                User.status: UserStatus.active,
+                User.last_status_change: datetime.utcnow(),
+            },
+            synchronize_session=False,
+        )
+        db.commit()
+        reactivated.extend(batch_ids)
+    return reactivated
+
+
 def bulk_adjust_subscription_group_users(
     db: Session,
     *,
     is_trial: bool,
     add_expire_days: Optional[int] = None,
     add_data_limit_bytes: Optional[int] = None,
-) -> int:
+) -> Tuple[int, List[int]]:
     """
     Adjust expire and/or data_limit for every user in the trial or paid (non-trial) group.
     Only rows with non-null expire / data_limit are updated for the respective field.
@@ -1764,4 +1805,8 @@ def bulk_adjust_subscription_group_users(
             )
             db.commit()
 
-    return matched
+    reactivated: List[int] = []
+    if add_data_limit_bytes is not None and int(add_data_limit_bytes) > 0:
+        reactivated = _bulk_reactivate_limited_under_data_limit(db, flt)
+
+    return matched, reactivated

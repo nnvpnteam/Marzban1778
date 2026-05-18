@@ -76,3 +76,4 @@ class SubscriptionTrafficGroupBulk(BaseModel):
 
 class SubscriptionTrafficGroupBulkResult(BaseModel):
     matched_users: int
+    reactivated_users: int = 0

@@ -1,9 +1,9 @@
 from typing import Dict, List, Union
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 
-from app import __version__, xray
-from app.db import Session, crud, get_db
+from app import __version__, logger, xray
+from app.db import GetDB, Session, User, crud, get_db
 from app.models.admin import Admin
 from app.models.proxy import ProxyHost, ProxyInbound, ProxyTypes
 from app.models.subscription_traffic import (
@@ -18,6 +18,36 @@ from app.utils import responses
 from app.utils.system import cpu_usage, memory_usage, realtime_bandwidth
 
 router = APIRouter(tags=["System"], prefix="/api", responses={401: responses._401})
+
+
+def _sync_bulk_reactivated_users_xray(user_ids: List[int], is_trial: bool) -> None:
+    """Re-add users to Xray after bulk limit increase lifted a limited status."""
+    if not user_ids:
+        return
+    with GetDB() as db:
+        sys_row = crud.get_system_usage(db)
+        metered = crud.subscription_metered_nodes(
+            sys_row.trial_metered_node_ids if is_trial else sys_row.paid_metered_node_ids
+        )
+    chunk_size = 200
+    for offset in range(0, len(user_ids), chunk_size):
+        chunk = user_ids[offset : offset + chunk_size]
+        with GetDB() as db:
+            users = db.query(User).filter(User.id.in_(chunk)).all()
+        for user in users:
+            if user.status != UserStatus.active:
+                continue
+            try:
+                if metered:
+                    xray.operations.add_user_to_metered_nodes(user, metered)
+                else:
+                    xray.operations.add_user(user)
+            except Exception as e:
+                logger.warning(
+                    'Bulk reactivate: failed to sync Xray for user "%s": %s',
+                    user.username,
+                    e,
+                )
 
 
 @router.get("/system", response_model=SystemStats)
@@ -113,6 +143,7 @@ def put_subscription_traffic_settings(
 )
 def post_subscription_traffic_group_bulk(
     payload: SubscriptionTrafficGroupBulk,
+    bg: BackgroundTasks,
     db: Session = Depends(get_db),
     admin: Admin = Depends(Admin.check_sudo_admin),
 ):
@@ -126,13 +157,18 @@ def post_subscription_traffic_group_bulk(
     bytes_delta = None
     if payload.add_data_limit_gb is not None and payload.add_data_limit_gb != 0:
         bytes_delta = int(round(float(payload.add_data_limit_gb) * 1024 * 1024 * 1024))
-    n = crud.bulk_adjust_subscription_group_users(
+    n, reactivated_ids = crud.bulk_adjust_subscription_group_users(
         db,
         is_trial=is_trial,
         add_expire_days=payload.add_expire_days,
         add_data_limit_bytes=bytes_delta,
     )
-    return SubscriptionTrafficGroupBulkResult(matched_users=n)
+    if reactivated_ids:
+        bg.add_task(_sync_bulk_reactivated_users_xray, reactivated_ids, is_trial)
+    return SubscriptionTrafficGroupBulkResult(
+        matched_users=n,
+        reactivated_users=len(reactivated_ids),
+    )
 
 
 @router.get("/inbounds", response_model=Dict[ProxyTypes, List[ProxyInbound]])

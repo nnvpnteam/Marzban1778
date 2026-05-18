@@ -311,13 +311,18 @@ export const SubscriptionTrafficSettingsModal: FC<Props> = ({
       const body: Record<string, unknown> = { group };
       if (hasD) body.add_expire_days = d;
       if (hasG) body.add_data_limit_gb = g;
-      const res = await fetch<{ matched_users: number }>(
-        "/subscription_traffic_group_bulk",
-        { method: "POST", body, timeout: 900_000 }
-      );
+      const res = await fetch<{
+        matched_users: number;
+        reactivated_users?: number;
+      }>("/subscription_traffic_group_bulk", {
+        method: "POST",
+        body,
+        timeout: 900_000,
+      });
       toast({
         title: t("subscriptionTraffic.bulkDone", {
           count: res.matched_users,
+          reactivated: res.reactivated_users ?? 0,
         }),
         status: "success",
       });
